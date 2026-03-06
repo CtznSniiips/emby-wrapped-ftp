@@ -19,10 +19,10 @@ export function parseTimeRange(value: string): TimeRange {
 
 export function formatTimeRangeLabel(range: TimeRange): string {
     if (range.type === 'month' && range.month) {
-        const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
-        return `${range.year}年${monthNames[range.month - 1]}`;
+        const monthNames = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+        return `${range.year}${monthNames[range.month - 1]}`;
     }
-    return `${range.year}年度`;
+    return `${range.year}`;
 }
 
 export function timeRangeToString(range: TimeRange): string {
@@ -117,7 +117,7 @@ export interface UserStats {
     username: string;
     year: number;
     timeRange: string;  // e.g., "2025" or "2026-01"
-    timeRangeLabel: string;  // e.g., "2025年度" or "2026年1月"
+    timeRangeLabel: string;  // e.g., "2025" or "2026-1"
     generatedAt: string;
 
     // Time stats
@@ -200,15 +200,15 @@ export function getAvailableTimeRanges(): { value: string; label: string }[] {
     const options: { value: string; label: string }[] = [];
 
     // Add previous year
-    options.push({ value: String(currentYear - 1), label: `${currentYear - 1}年度` });
+    options.push({ value: String(currentYear - 1), label: `${currentYear - 1}` });
 
     // Add months of current year (strictly before current month)
     for (let month = 1; month < currentMonth; month++) {
         const monthStr = month < 10 ? '0' + month : String(month);
-        const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+        const monthNames = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
         options.push({
             value: `${currentYear}-${monthStr}`,
-            label: `${currentYear}年${monthNames[month - 1]}`
+            label: `${currentYear} ${monthNames[month - 1]}`
         });
     }
 
