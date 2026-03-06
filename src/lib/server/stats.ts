@@ -179,21 +179,57 @@ export interface UserStats {
  * Parse datetime from date + time strings
  */
 function parseDateTime(date: string, time: string): Date {
+    const dateMatch = date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    const timeMatch = time.match(/^(\d{2}):(\d{2})(?::(\d{2}))?/);
+
+    // Parse date/time components directly to avoid timezone shifts from Date string parsing
+    if (dateMatch && timeMatch) {
+        const [, year, month, day] = dateMatch;
+        const [, hour, minute, second = '0'] = timeMatch;
+        return new Date(
+            Number(year),
+            Number(month) - 1,
+            Number(day),
+            Number(hour),
+            Number(minute),
+            Number(second)
+        );
+    }
+
+    // Fallback for unexpected formats
     return new Date(`${date}T${time}`);
+}
+
+function getDateParts(dateStr: string): { year: number; month: number } | null {
+    const dateMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (dateMatch) {
+        return {
+            year: Number(dateMatch[1]),
+            month: Number(dateMatch[2])
+        };
+    }
+
+    const parsed = new Date(dateStr);
+    if (isNaN(parsed.getTime())) return null;
+
+    return {
+        year: parsed.getUTCFullYear(),
+        month: parsed.getUTCMonth() + 1
+    };
 }
 
 /**
  * Check if a date matches the given time range
  */
 export function matchesTimeRange(dateStr: string, range: TimeRange): boolean {
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return false;
+    const dateParts = getDateParts(dateStr);
+    if (!dateParts) return false;
 
     if (range.type === 'year') {
-        return date.getFullYear() === range.year;
+        return dateParts.year === range.year;
     }
-    // Month: check both year and month (getMonth is 0-indexed)
-    return date.getFullYear() === range.year && (date.getMonth() + 1) === range.month;
+    // Month: check both year and month
+    return dateParts.year === range.year && dateParts.month === range.month;
 }
 
 /**
