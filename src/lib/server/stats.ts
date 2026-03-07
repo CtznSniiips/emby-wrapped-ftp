@@ -325,8 +325,11 @@ export async function aggregateUserStats(userId: string, username: string, timeR
     const itemIdList = [...allItemIds];
 
     try {
-        // Batch fetch items in chunks of 50
-        for (let i = 0; i < Math.min(itemIdList.length, 200); i += 50) {
+        // Batch fetch items in chunks of 50.
+        // IMPORTANT: fetch all unique IDs for the selected range.
+        // Capping this list truncates older activity (often January in yearly views),
+        // which makes totals and monthly stats inconsistent with month-only selections.
+        for (let i = 0; i < itemIdList.length; i += 50) {
             const batch = itemIdList.slice(i, i + 50);
             const items = await emby.getItems(filterUserId, batch);
             items.forEach(item => itemDetails.set(item.Id, item));
