@@ -40,7 +40,7 @@
 	function getMonthInsight(): string {
 		const monthName = formatMonthShort(peakMonth);
 		const hours = Math.round(stats.heatmap.months[peakMonth] / 60);
-		return `${monthName} was your streaming month with ${hours} hours`;
+		return `${monthName} was your top streaming month with ${hours} hours`;
 	}
 </script>
 
