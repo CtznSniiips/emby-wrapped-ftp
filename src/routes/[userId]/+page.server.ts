@@ -1,4 +1,4 @@
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import { emby } from '$lib/server/emby';
 import { tmdb } from '$lib/server/tmdb';
 import { aggregateUserStats, parseTimeRange, timeRangeToString, getAvailableTimeRanges, type UserStats, type TopItem, type TimeRange } from '$lib/server/stats';
@@ -98,18 +98,22 @@ async function enhanceTopItemImages(items: TopItem[], type: 'show' | 'movie'): P
 }
 
 export const load: PageServerLoad = async ({ params, url }) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/f6b74b87-f707-4f3b-8031-077d6c5d0a25',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'[userId]/+page.server.ts:126',message:'Page load entry',data:{userId: params.userId, period: url.searchParams.get('period')},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
-    // #endregion
     const { userId: userIdentifier } = params;
+
+    // Legacy shorthand links like `/:userId?2026` should land on community stats first
+    // while preserving both user and period as homepage query params.
+    const rawQuery = url.search.slice(1);
+    const shorthandParam = !rawQuery.includes('=') && rawQuery ? decodeURIComponent(rawQuery) : null;
+    if (shorthandParam) {
+        const nextUrl = `/?user=${encodeURIComponent(userIdentifier)}&period=${encodeURIComponent(shorthandParam)}`;
+        throw redirect(307, nextUrl);
+    }
 
     // Get time range from URL parameter, default to previous year
     const now = new Date();
     const defaultTimeRange = String(now.getFullYear() - 1);
     const periodParam = url.searchParams.get('period');
-    const rawQuery = url.search.slice(1);
-    const shorthandParam = !rawQuery.includes('=') && rawQuery ? decodeURIComponent(rawQuery) : null;
-    const timeRangeParam = periodParam || shorthandParam || defaultTimeRange;
+    const timeRangeParam = periodParam || defaultTimeRange;
     const timeRange = parseTimeRange(timeRangeParam);
     const timeRangeStr = timeRangeToString(timeRange);
 
