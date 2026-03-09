@@ -15,6 +15,7 @@
 	import FirstLastWatchCard from "$lib/components/cards/FirstLastWatchCard.svelte";
 	import FinaleCard from "$lib/components/cards/FinaleCard.svelte";
 	import PersonalityCard from "$lib/components/cards/PersonalityCard.svelte";
+	import RewatchCard from "$lib/components/cards/RewatchCard.svelte";
 	import MusicSummaryCard from "$lib/components/cards/MusicSummaryCard.svelte";
 	import type { PageData } from "./$types";
 
@@ -135,6 +136,15 @@
             });
         }
 
+
+		// Rewatch insights
+		if (stats.rewatch.uniqueItemsWatched > 0) {
+			cards.push({
+				type: "rewatch",
+				component: RewatchCard,
+				props: { stats },
+			});
+		}
 		// 10. Day of week patterns
 		if (stats.heatmap.days.some((d) => d > 0)) {
 			cards.push({

@@ -81,6 +81,31 @@ export interface MusicStats {
     topTracks: { name: string; artist: string; minutes: number; count: number; imageUrl?: string }[];
 }
 
+export interface RewatchItem {
+    id: string;
+    name: string;
+    mediaType: string;
+    playCount: number;
+    repeatPlays: number;
+}
+
+export interface RewatchTypeSplit {
+    mediaType: string;
+    uniqueItemsWatched: number;
+    itemsRewatched: number;
+    totalRepeatPlays: number;
+    rewatchIndex: number;
+}
+
+export interface RewatchStats {
+    uniqueItemsWatched: number;
+    itemsRewatched: number;
+    totalRepeatPlays: number;
+    rewatchIndex: number;
+    topRewatchedTitles: RewatchItem[];
+    mediaTypeSplit?: RewatchTypeSplit[];
+}
+
 export interface FullMusicStats {
     userId: string;
     username: string;
@@ -173,6 +198,9 @@ export interface UserStats {
     // Diversity and preference ratios
     genreDiversity: number;  // 0-1, higher = more diverse viewing
     movieToTvRatio: number;  // >1 = prefers movies, <1 = prefers TV
+
+    // Rewatching
+    rewatch: RewatchStats;
 }
 
 /**
@@ -322,9 +350,17 @@ export async function aggregateUserStats(userId: string, username: string, timeR
         return itemType === 'audio';
     });
 
+    // Rewatch inputs include movie, episode, and music video events
+    const rewatchActivity = allActivity.filter(a => {
+        if (!matchesTimeRange(a.date, range)) return false;
+        const itemType = a.item_type.toLowerCase();
+        return itemType === 'movie' || itemType === 'episode' || itemType === 'musicvideo';
+    });
+
     // Collect all unique item IDs we need to fetch details for
     const allItemIds = new Set<string>();
     videoActivity.forEach(a => allItemIds.add(String(a.item_id)));
+    rewatchActivity.forEach(a => allItemIds.add(String(a.item_id)));
 
     // Use FILTER_USER_ID if set, otherwise use the requesting user's ID
     // This allows filtering out NSFW content by using a restricted user's permissions
@@ -351,6 +387,7 @@ export async function aggregateUserStats(userId: string, username: string, timeR
 
     // Filter video activity to only include items the filter user has permission to access
     const accessibleVideoActivity = videoActivity.filter(a => itemDetails.has(String(a.item_id)));
+    const accessibleRewatchActivity = rewatchActivity.filter(a => itemDetails.has(String(a.item_id)));
 
     // Calculate total time (duration is in seconds) - only for accessible items
     const totalMinutes = Math.round(accessibleVideoActivity.reduce((sum, a) => sum + parseInt(a.duration || '0', 10), 0) / 60);
@@ -363,6 +400,14 @@ export async function aggregateUserStats(userId: string, username: string, timeR
     // Get unique items
     const uniqueMovieIds = new Set(movies.map(m => String(m.item_id)));
     const uniqueShowIds = new Set<string>();
+
+    // Rewatch tracking by item (movies, episodes, and music videos)
+    const rewatchByItem = new Map<string, {
+        id: string;
+        name: string;
+        mediaType: string;
+        playCount: number;
+    }>();
 
     // Aggregate by item for top lists
     const movieStats = new Map<string, { minutes: number; count: number; name: string }>();
@@ -711,6 +756,53 @@ export async function aggregateUserStats(userId: string, username: string, timeR
         };
     }
 
+    for (const activity of accessibleRewatchActivity) {
+        const itemType = activity.item_type.toLowerCase();
+        const rewatchKey = `${itemType}:${String(activity.item_id)}`;
+        const existingRewatch = rewatchByItem.get(rewatchKey) || {
+            id: String(activity.item_id),
+            name: activity.item_name,
+            mediaType: itemType,
+            playCount: 0
+        };
+        existingRewatch.playCount += 1;
+        rewatchByItem.set(rewatchKey, existingRewatch);
+    }
+
+    const rewatchItems = [...rewatchByItem.values()].map(item => ({
+        ...item,
+        repeatPlays: Math.max(0, item.playCount - 1)
+    }));
+    const uniqueItemsWatched = rewatchItems.length;
+    const itemsRewatched = rewatchItems.filter(item => item.playCount > 1).length;
+    const totalRepeatPlays = rewatchItems.reduce((sum, item) => sum + item.repeatPlays, 0);
+    const rewatchIndex = uniqueItemsWatched > 0
+        ? Math.round((totalRepeatPlays / uniqueItemsWatched) * 1000) / 10
+        : 0;
+
+    const mediaTypeSplit = ['movie', 'episode', 'musicvideo']
+        .map(mediaType => {
+            const items = rewatchItems.filter(item => item.mediaType === mediaType);
+            if (items.length === 0) return null;
+
+            const typeRepeatPlays = items.reduce((sum, item) => sum + item.repeatPlays, 0);
+            return {
+                mediaType,
+                uniqueItemsWatched: items.length,
+                itemsRewatched: items.filter(item => item.playCount > 1).length,
+                totalRepeatPlays: typeRepeatPlays,
+                rewatchIndex: Math.round((typeRepeatPlays / items.length) * 1000) / 10
+            };
+        })
+        .filter((split): split is RewatchTypeSplit => split !== null);
+
+    const topRewatchedTitles = rewatchItems
+        .filter(item => item.playCount > 1)
+        .sort((a, b) => {
+            if (b.repeatPlays !== a.repeatPlays) return b.repeatPlays - a.repeatPlays;
+            return b.playCount - a.playCount;
+        });
+
     return {
         userId,
         username,
@@ -755,7 +847,15 @@ export async function aggregateUserStats(userId: string, username: string, timeR
         movieToTvRatio: episodes.length > 0
             ? (movies.reduce((sum, m) => sum + parseInt(m.duration || '0', 10), 0) / 60) /
             Math.max(1, episodes.reduce((sum, e) => sum + parseInt(e.duration || '0', 10), 0) / 60)
-            : uniqueMovieIds.size > 0 ? 10 : 0  // Movie-only viewer
+            : uniqueMovieIds.size > 0 ? 10 : 0,  // Movie-only viewer
+        rewatch: {
+            uniqueItemsWatched,
+            itemsRewatched,
+            totalRepeatPlays,
+            rewatchIndex,
+            topRewatchedTitles: topRewatchedTitles.slice(0, 5),
+            mediaTypeSplit: mediaTypeSplit.length > 0 ? mediaTypeSplit : undefined
+        }
     };
 }
 
