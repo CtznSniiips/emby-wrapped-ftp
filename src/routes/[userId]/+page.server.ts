@@ -1,6 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 import { emby } from '$lib/server/emby';
 import { tmdb } from '$lib/server/tmdb';
+import { getAuthSession } from '$lib/server/auth';
 import { aggregateUserStats, parseTimeRange, timeRangeToString, getAvailableTimeRanges, type UserStats, type TopItem, type TimeRange, type SeriesCompletionStat } from '$lib/server/stats';
 import type { PageServerLoad } from './$types';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
@@ -122,8 +123,16 @@ async function enhanceSeriesCompletionImages(items: SeriesCompletionStat[]): Pro
 
     return enhanced;
 }
-export const load: PageServerLoad = async ({ params, url }) => {
+export const load: PageServerLoad = async ({ params, url, cookies }) => {
     const { userId: userIdentifier } = params;
+    const periodParam = url.searchParams.get('period');
+
+    const session = getAuthSession(cookies);
+
+    if (!session) {
+        const nextUrl = periodParam ? `/?period=${encodeURIComponent(periodParam)}` : '/';
+        throw redirect(307, nextUrl);
+    }
 
     // Legacy shorthand links like `/:userId?2026` should land on community stats first
     // while preserving both user and period as homepage query params.
@@ -145,7 +154,6 @@ export const load: PageServerLoad = async ({ params, url }) => {
     // Get time range from URL parameter, default to previous year
     const now = new Date();
     const defaultTimeRange = String(now.getFullYear() - 1);
-    const periodParam = url.searchParams.get('period');
     const timeRangeParam = periodParam || defaultTimeRange;
     const timeRange = parseTimeRange(timeRangeParam);
     const timeRangeStr = timeRangeToString(timeRange);
@@ -158,6 +166,10 @@ export const load: PageServerLoad = async ({ params, url }) => {
 
         if (!user) {
             throw error(404, 'User not found');
+        }
+
+        if (user.Id !== session.userId) {
+            throw redirect(307, `/${session.userId}?period=${encodeURIComponent(timeRangeStr)}`);
         }
 
         // Check cache first

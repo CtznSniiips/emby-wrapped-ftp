@@ -44,7 +44,7 @@
 	// Server stats
 	let serverStats: any = null;
 	let statsLoading = true;
-	let showUserForm = false;
+	let authenticatedUser = data.authenticatedUser;
 	let currentCardIndex = 0;
 
 	// Card phases for animations (only for cards that aren't using separate components)
@@ -54,7 +54,7 @@
 	let ctaPhase = 0;
 
 	// Fetch server stats when selectedTimeRange changes
-	$: if (selectedTimeRange) {
+	$: if (selectedTimeRange && authenticatedUser) {
 		fetchServerStats();
 	}
 
@@ -126,10 +126,6 @@
 		}
 	}
 
-	function enterUserForm() {
-		showUserForm = true;
-	}
-
 	async function handleSubmit(event: Event) {
 		event.preventDefault();
 
@@ -142,13 +138,15 @@
 		error = "";
 
 		try {
-			const response = await fetch(
-				`/api/validate-user?username=${encodeURIComponent(username.trim())}`,
-			);
+			const response = await fetch('/api/auth/login', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ username: username.trim() }),
+			});
 			const data = await response.json();
 
-			if (data.valid) {
-				await goto(`/${data.userId}?period=${selectedTimeRange}`);
+			if (response.ok && data.valid) {
+				authenticatedUser = { userId: data.userId, username: data.username };
 			} else {
 				error = data.error || "User not found on this server";
 			}
@@ -159,6 +157,11 @@
 		}
 	}
 
+
+	function openPersonalWrapped() {
+		if (!authenticatedUser) return;
+		goto(`/${authenticatedUser.userId}?period=${selectedTimeRange}`);
+	}
 	// Computed stats
 	$: totalHours = serverStats ? Math.round(serverStats.totalMinutes / 60) : 0;
 	$: totalDays = serverStats
@@ -187,7 +190,7 @@
 	<title>{displayPeriod} Wrapped · Emby for the People</title>
 </svelte:head>
 
-{#if showUserForm}
+{#if !authenticatedUser}
 	<!-- User Login Section -->
 	<div class="user-page">
 		<div class="bg-pattern"></div>
@@ -254,9 +257,6 @@
 				</button>
 			</form>
 
-			<button class="back-btn" on:click={() => (showUserForm = false)}>
-				{UNICODE.triangleUp} Back to community stats
-			</button>
 		</main>
 	</div>
 {:else}
@@ -476,7 +476,7 @@
 					<button
 						class="cta-btn"
 						class:show={ctaPhase >= 4}
-						on:click={enterUserForm}
+						on:click={openPersonalWrapped}
 					>
 						<span>See Your Wrapped</span>
 						<span class="btn-icon">{UNICODE.arrow}</span>
