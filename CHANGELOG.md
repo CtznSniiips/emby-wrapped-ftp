@@ -2,12 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- **Rewatch Insights Card**: Added playback-history rewatch analytics with a wrapped card for rewatch index, top rewatched titles, and per-media-type repeat splits when available.
+
 ## [1.2.0] - 2026-03-08
 
 ### Added
 - **URL Parameter Routing**: Added support for prefilled wrapped links using `/username?YYYY` and `/username?MM-YYYY` formats.
 - **Community-Friendly URL Flow**: Added redirect handling for legacy shorthand URLs so existing links continue to work with the newer route flow.
-- **Rewatch Insights Card**: Added playback-history rewatch analytics with a new wrapped card for rewatch index, top rewatched titles, and per-media-type repeat splits when available.
 
 ### Changed
 - **Period Selection UX**: Updated period formatting to `MM-YYYY`, added current-year quick selection, and made wrapped period labels dynamic across the UI.
