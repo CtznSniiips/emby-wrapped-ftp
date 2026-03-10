@@ -73,7 +73,7 @@
             </div>
 
             <h1 class="title font-display">
-                Sign in to Wrapped
+                Sign in to EmbyWrapped
             </h1>
 
             <div class="time-selector-wrapper">
@@ -86,7 +86,7 @@
             </div>
 
             <p class="subtitle">
-                Log in with your Emby username and password to continue to the community stats flow.
+                Log in with your Emby username and password to continue
             </p>
         </header>
 
