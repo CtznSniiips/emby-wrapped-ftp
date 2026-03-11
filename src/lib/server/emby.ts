@@ -38,6 +38,44 @@ export interface PlaybackActivity {
     [key: string]: string | number | boolean | undefined;
 }
 
+type RawPlaybackActivity = Record<string, string | number | boolean | undefined>;
+
+function readFirstString(record: RawPlaybackActivity, keys: string[]): string {
+    for (const key of keys) {
+        const value = record[key];
+        if (value === undefined || value === null) continue;
+        const str = String(value).trim();
+        if (str.length > 0) return str;
+    }
+    return '';
+}
+
+function normalizePlaybackActivityRecord(record: RawPlaybackActivity): PlaybackActivity {
+    const normalized: PlaybackActivity = {
+        date: readFirstString(record, ['date', 'Date']),
+        time: readFirstString(record, ['time', 'Time']),
+        user_id: readFirstString(record, ['user_id', 'UserId']),
+        item_name: readFirstString(record, ['item_name', 'ItemName']),
+        item_id: Number(readFirstString(record, ['item_id', 'ItemId']) || '0'),
+        item_type: readFirstString(record, ['item_type', 'ItemType']),
+        duration: readFirstString(record, ['duration', 'PlayDuration', 'Duration']),
+        remote_address: readFirstString(record, ['remote_address', 'RemoteAddress']) || undefined,
+        user_name: readFirstString(record, ['user_name', 'UserName']),
+        user_has_image: readFirstString(record, ['user_has_image', 'UserPrimaryImageTag']) !== '',
+        client: readFirstString(record, ['client', 'Client']) || undefined,
+        client_name: readFirstString(record, ['client_name', 'ClientName']) || undefined,
+        device: readFirstString(record, ['device', 'Device']) || undefined,
+        device_name: readFirstString(record, ['device_name', 'DeviceName']) || undefined,
+        app: readFirstString(record, ['app', 'ApplicationName']) || undefined,
+        app_name: readFirstString(record, ['app_name', 'AppName']) || undefined
+    };
+
+    return {
+        ...record,
+        ...normalized
+    };
+}
+
 export interface EmbyItem {
     Id: string;
     Name: string;
@@ -159,10 +197,12 @@ class EmbyClient {
      * Get playback activity for a specific user from the Playback Reporting plugin
      */
     async getUserPlaybackActivity(userId: string, days: number = 365): Promise<PlaybackActivity[]> {
-        return this.fetch<PlaybackActivity[]>('/user_usage_stats/UserPlaylist', {
+        const activity = await this.fetch<RawPlaybackActivity[]>('/user_usage_stats/UserPlaylist', {
             user_id: userId,
             days: days.toString()
         });
+
+        return activity.map((record) => normalizePlaybackActivityRecord(record));
     }
 
     /**
