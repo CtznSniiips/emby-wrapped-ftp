@@ -39,6 +39,13 @@ export interface PlaybackActivity {
 }
 
 type RawPlaybackActivity = Record<string, string | number | boolean | undefined>;
+type RawBreakdownRecord = Record<string, string | number | boolean | undefined>;
+
+export interface DeviceBreakdownEntry {
+    name: string;
+    minutes: number;
+    count: number;
+}
 
 function readFirstString(record: RawPlaybackActivity, keys: string[]): string {
     for (const key of keys) {
@@ -203,6 +210,84 @@ class EmbyClient {
         });
 
         return activity.map((record) => normalizePlaybackActivityRecord(record));
+    }
+
+    /**
+     * Get device-name breakdown directly from Playback Reporting plugin.
+     * This endpoint is more reliable than per-event device fields on some plugin versions.
+     */
+    async getDeviceNameBreakdown(userId: string, days: number): Promise<DeviceBreakdownEntry[]> {
+        const payload = await this.fetch<unknown>('/user_usage_stats/DeviceName/BreakdownReport', {
+            user_id: userId,
+            days: String(days)
+        });
+
+        const pickRows = (raw: unknown): RawBreakdownRecord[] => {
+            if (Array.isArray(raw)) return raw as RawBreakdownRecord[];
+            if (!raw || typeof raw !== 'object') return [];
+
+            const container = raw as Record<string, unknown>;
+            const candidates = ['Items', 'items', 'Results', 'results', 'Data', 'data', 'Rows', 'rows', 'Report', 'report'];
+
+            for (const key of candidates) {
+                const value = container[key];
+                if (Array.isArray(value)) return value as RawBreakdownRecord[];
+            }
+
+            return [];
+        };
+
+        const parseDurationToSeconds = (raw: string): number => {
+            const value = raw.trim();
+            if (!value) return 0;
+
+            if (/^\d{1,3}:\d{2}:\d{2}(?:\.\d+)?$/.test(value)) {
+                const [h, m, s] = value.split(':');
+                return Number(h) * 3600 + Number(m) * 60 + Number(s);
+            }
+
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric) || numeric <= 0) return 0;
+
+            // Heuristics: plugin values may be ticks, milliseconds, or seconds.
+            if (numeric > 1e12) return numeric / 10_000_000; // .NET ticks -> seconds
+            if (numeric > 1e8) return numeric / 1000; // milliseconds -> seconds
+            return numeric; // seconds
+        };
+
+        const rows = pickRows(payload);
+
+        return rows
+            .map((record): DeviceBreakdownEntry => {
+                const name = readFirstString(record, [
+                    'name',
+                    'Name',
+                    'device_name',
+                    'DeviceName',
+                    'device',
+                    'Device',
+                    'label',
+                    'Label',
+                    'ReportName'
+                ]);
+                const durationSeconds = parseDurationToSeconds(readFirstString(record, [
+                    'duration',
+                    'Duration',
+                    'TotalDuration',
+                    'PlayDuration',
+                    'TotalPlayDuration',
+                    'PlaybackDuration',
+                    'Time'
+                ]));
+                const count = Math.max(0, Math.round(Number(readFirstString(record, ['count', 'Count', 'PlaybackCount', 'Plays', 'Items']) || '0')));
+
+                return {
+                    name,
+                    minutes: durationSeconds / 60,
+                    count
+                };
+            })
+            .filter((row) => row.name.trim().length > 0 && row.minutes > 0);
     }
 
     /**
