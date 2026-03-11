@@ -443,13 +443,7 @@ function normalizeDeviceClient(activity: PlaybackActivity): string {
     };
 
     const rawCandidates = [
-        activity.device_name,
-        activity.device,
-        activity.client_name,
-        activity.client,
-        activity.app_name,
-        activity.app,
-        activity.label
+        activity.DeviceName
 
     ];
 
