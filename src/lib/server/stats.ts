@@ -448,7 +448,9 @@ function normalizeDeviceClient(activity: PlaybackActivity): string {
         activity.client_name,
         activity.client,
         activity.app_name,
-        activity.app
+        activity.app,
+        activity.label
+
     ];
 
     const raw = rawCandidates.find((value) => typeof value === 'string' && !isUnknownValue(value))?.trim();
