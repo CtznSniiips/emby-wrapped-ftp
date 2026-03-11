@@ -23,7 +23,9 @@ export interface ServerStats {
 const cachedStatsMap = new Map<string, { stats: ServerStats; time: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async ({ url, cookies }) => {  // add cookies
+    const session = getAuthSession(cookies);
+    if (!session) return json({ error: 'Unauthorized' }, { status: 401 });
     
     try {
         const periodParam = url.searchParams.get('period') || String(new Date().getFullYear() - 1);

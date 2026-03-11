@@ -71,7 +71,9 @@ function getCachePath(key: string): string {
     return join(CACHE_DIR, key);
 }
 
-export const GET: RequestHandler = async ({ url, fetch }) => {
+export const GET: RequestHandler = async ({ url, cookies, fetch }) => {  // add cookies
+    const session = getAuthSession(cookies);
+    if (!session) return new Response('Unauthorized', { status: 401 });
     const imageUrl = url.searchParams.get('url');
 
     if (!imageUrl) {

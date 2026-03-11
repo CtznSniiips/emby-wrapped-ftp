@@ -2,7 +2,9 @@ import { json } from '@sveltejs/kit';
 import { emby } from '$lib/server/emby';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async ({ url, cookies }) => {  // add cookies
+    const session = getAuthSession(cookies);
+    if (!session) return json({ valid: false, error: 'Unauthorized' }, { status: 401 });
     const username = url.searchParams.get('username');
 
     if (!username) {
