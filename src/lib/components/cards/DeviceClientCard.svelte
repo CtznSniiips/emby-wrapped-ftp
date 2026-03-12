@@ -62,7 +62,15 @@
 <style>
 	.card-base { position: relative; width: 100%; min-height: 100%; display: flex; align-items: center; justify-content: center; padding: 2rem 1.5rem; opacity: 0; transition: opacity 0.4s ease; }
 	.card-base.visible { opacity: 1; }
-	.share-container { position: absolute; top: 1.5rem; right: 1.5rem; z-index: 50; }
+	.share-container {
+		position: absolute;
+		top: 1rem;
+		right: 1rem;
+		z-index: 50;
+		/* Add a generous invisible tap area around the container */
+		padding: 0.5rem;
+		margin: -0.5rem;
+	}
 	:global(.snapshot-mode) .share-container { display:none !important; }
 	.card-content { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 1.25rem; }
 	.title { opacity: 0; transform: translateY(-12px); transition: all .4s ease; display:flex; align-items:center; gap:.5rem; }

@@ -81,4 +81,13 @@
 	.current-value { font-size: 1.5rem; margin-bottom: .35rem; }
 	.range { color: rgba(255,255,255,.65); font-size: .9rem; }
 	.timezone { margin-top: 1rem; color: rgba(255,255,255,.55); font-size: .8rem; }
+	.share-container {
+		position: absolute;
+		top: 1rem;
+		right: 1rem;
+		z-index: 50;
+		/* Add a generous invisible tap area around the container */
+		padding: 0.5rem;
+		margin: -0.5rem;
+	}
 </style>

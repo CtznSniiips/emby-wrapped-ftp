@@ -99,45 +99,30 @@
         gap: 0.5rem;
         background: rgba(20, 20, 20, 0.9);
         backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 0.5rem 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 0.625rem 1.25rem;  /* slightly larger than before */
         border-radius: 999px;
-        color: rgba(255, 255, 255, 0.7);
+        color: rgba(255, 255, 255, 0.85);  /* more visible */
         font-family: inherit;
-        font-size: 0.75rem;
+        font-size: 0.8rem;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s ease;
         z-index: 50;
-    }
-
-    /* Icon-only and subtle on mobile */
-    @media (max-width: 600px) {
-        .share-btn {
-            width: 36px;
-            height: 36px;
-            padding: 0;
-            border-radius: 50%;
-            opacity: 0.6;
-        }
-
-        .share-btn:active {
-            opacity: 1;
-        }
-
-        .label {
-            display: none;
-        }
+        /* Minimum touch target via padding trick — visually stays pill-shaped */
+        min-height: 44px;
+        min-width: 44px;
     }
 
     .share-btn:hover:not(:disabled) {
         background: rgba(29, 185, 84, 0.3);
         border-color: rgba(29, 185, 84, 0.5);
+        color: white;
         transform: scale(1.05);
     }
 
     .share-btn:active:not(:disabled) {
-        transform: scale(0.98);
+        transform: scale(0.96);
     }
 
     .share-btn:disabled {
@@ -152,5 +137,13 @@
 
     .label {
         line-height: 1;
+    }
+
+    /* Mobile: keep the label visible, just make button slightly more compact */
+    @media (max-width: 600px) {
+        .share-btn {
+            padding: 0.625rem 1rem;
+            font-size: 0.75rem;
+        }
     }
 </style>

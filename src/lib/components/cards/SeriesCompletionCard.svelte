@@ -298,4 +298,14 @@
 		font-weight: 700;
 		color: #67e8f9;
 	}
+
+	.share-container {
+		position: absolute;
+		top: 1rem;
+		right: 1rem;
+		z-index: 50;
+		/* Add a generous invisible tap area around the container */
+		padding: 0.5rem;
+		margin: -0.5rem;
+	}
 </style>

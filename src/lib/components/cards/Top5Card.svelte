@@ -616,10 +616,12 @@
 
 	.share-container {
 		position: absolute;
-		top: 1.5rem;
-		right: 1.5rem;
+		top: 1rem;
+		right: 1rem;
 		z-index: 50;
-		animation: fade-in 0.5s ease 2s backwards;
+		/* Add a generous invisible tap area around the container */
+		padding: 0.5rem;
+		margin: -0.5rem;
 	}
 
 	/* Fallbacks */
