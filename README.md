@@ -36,6 +36,7 @@ This version (`emby-wrapped-ftp`) adds several features and improvements over th
 - **Viewing Personality** - Fun personality type based on your habits
 - **Binge Sessions** - See your longest viewing marathons
 - **Monthly Journey** - Track your viewing across the year
+- **Device breakdown** - See which devices you watched on
 - **Share Cards** - Download individual stat cards to share
 
 ## Requirements
@@ -171,8 +172,8 @@ For Docker deployments, mount a volume to `/app/static/music/` (see docker-compo
 
 ### General use
 1. Navigate to the app in your browser
-2. Select the time period (Year or Month) you want to view
-3. Select your user from the list
+2. Log in using an Emby username and password for your Emby instance
+3. Select the time period (Year or Month) you want to view
 4. Enjoy your personalized Emby Wrapped experience!
 5. Use the Share button on any card to download it as an image
 
