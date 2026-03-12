@@ -292,10 +292,10 @@
 	}
 
 	.share-container {
-		position: absolute;
+		position: fixed;
 		top: 1rem;
 		right: 1rem;
-		z-index: 50;
+		z-index: 200;
 		/* Add a generous invisible tap area around the container */
 		padding: 0.5rem;
 		margin: -0.5rem;

@@ -82,10 +82,10 @@
 	.range { color: rgba(255,255,255,.65); font-size: .9rem; }
 	.timezone { margin-top: 1rem; color: rgba(255,255,255,.55); font-size: .8rem; }
 	.share-container {
-		position: absolute;
+		position: fixed;
 		top: 1rem;
 		right: 1rem;
-		z-index: 50;
+		z-index: 200;
 		/* Add a generous invisible tap area around the container */
 		padding: 0.5rem;
 		margin: -0.5rem;

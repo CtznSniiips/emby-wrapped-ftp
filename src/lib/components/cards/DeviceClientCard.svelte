@@ -63,10 +63,10 @@
 	.card-base { position: relative; width: 100%; min-height: 100%; display: flex; align-items: center; justify-content: center; padding: 2rem 1.5rem; opacity: 0; transition: opacity 0.4s ease; }
 	.card-base.visible { opacity: 1; }
 	.share-container {
-		position: absolute;
+		position: fixed;
 		top: 1rem;
 		right: 1rem;
-		z-index: 50;
+		z-index: 200;
 		/* Add a generous invisible tap area around the container */
 		padding: 0.5rem;
 		margin: -0.5rem;
