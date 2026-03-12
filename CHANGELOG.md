@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.1] - 2026-03-12
+- **Login rate limiting**: Added rate limiting for failed logins to mitigate brute force attempts
+
 ## [2.0.0] - 2026-03-10
 - **Login page**: Added a login page with Emby Authentication. Users can log in with their usernames or email addresses and Emby password.
 
