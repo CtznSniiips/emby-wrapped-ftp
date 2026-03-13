@@ -20,6 +20,7 @@
                 backgroundColor: "#0a0a0a",
                 scale: 2,
                 useCORS: true,
+                allowTaint: true,
                 logging: false,
                 onclone: (clonedDoc) => {
                     const clonedElement = clonedDoc.getElementById(targetId);
@@ -28,10 +29,6 @@
                     clonedElement.classList.add('snapshot-mode');
                     clonedElement.style.opacity = '1';
                     clonedElement.style.transform = 'none';
-
-                    // Universal gradient text fix
-                    // html2canvas doesn't support -webkit-background-clip:text so we
-                    // walk every element and replace transparent text-fill with solid colors
                     clonedElement.querySelectorAll('*').forEach((el) => {
                         const style = window.getComputedStyle(el);
                         const fill = style.getPropertyValue('-webkit-text-fill-color');
@@ -56,8 +53,6 @@
                         }
                     });
 
-                    // IntroCard layout — reset animated absolute positioning
-                    // so year + profile don't overlap
                     const yearLockup = clonedElement.querySelector('.year-lockup') as HTMLElement;
                     if (yearLockup) {
                         yearLockup.style.position = 'relative';
@@ -69,7 +64,6 @@
                     const bridgeText = clonedElement.querySelector('.bridge-text') as HTMLElement;
                     if (bridgeText) bridgeText.style.display = 'none';
 
-                    // GenreCard conic-gradient — replace with SVG ring
                     const heroRing = clonedElement.querySelector('.hero-ring') as HTMLElement;
                     if (heroRing) {
                         const percent = parseFloat(heroRing.style.getPropertyValue('--percent') || '0');
@@ -99,13 +93,16 @@
                             </div>`;
                     }
 
-                    // Make all animated elements visible regardless of phase
                     clonedElement.querySelectorAll('[class]').forEach((el) => {
                         const htmlEl = el as HTMLElement;
-                        const computedOpacity = window.getComputedStyle(htmlEl).opacity;
-                        if (computedOpacity === '0') {
-                            htmlEl.style.opacity = '1';
-                            htmlEl.style.transform = 'none';
+                        // Use the cloned doc's own getComputedStyle so we see the
+                        // snapshot-mode CSS overrides that were just applied above.
+                        const clonedWin = clonedElement.ownerDocument.defaultView;
+                        if (!clonedWin) return;
+                        const computed = clonedWin.getComputedStyle(htmlEl);
+                        if (computed.opacity === '0') {
+                            htmlEl.style.setProperty('opacity', '1', 'important');
+                            htmlEl.style.setProperty('transform', 'none', 'important');
                         }
                     });
                 },

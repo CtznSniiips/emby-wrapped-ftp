@@ -128,6 +128,18 @@
         display: none !important;
     }
 
+    :global(.snapshot-mode) .icon-section {
+        opacity: 1 !important;
+        transform: scale(1) !important;
+    }
+
+    :global(.snapshot-mode) .title-section,
+    :global(.snapshot-mode) .tagline-section,
+    :global(.snapshot-mode) .details-section {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
     .card-content {
         display: flex;
         flex-direction: column;

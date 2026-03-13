@@ -170,9 +170,9 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 1.5rem;
+		justify-content: flex-start !important;
 		height: auto !important;
-		justify-content: flex-start;
+		gap: 2rem;
 		padding-top: 3rem;
 	}
 
@@ -192,6 +192,11 @@
 		opacity: 1 !important;
 		transform: none !important;
 		margin-top: 0 !important;
+	}
+
+	:global(.snapshot-mode) .footer-info {
+		opacity: 1 !important;
+		transform: none !important;
 	}
 
 	.intro-container {

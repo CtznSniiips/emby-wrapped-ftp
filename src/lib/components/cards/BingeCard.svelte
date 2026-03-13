@@ -145,6 +145,16 @@
 		display: none !important;
 	}
 
+	:global(.snapshot-mode) .header,
+	:global(.snapshot-mode) .show-reveal,
+	:global(.snapshot-mode) .episode-reveal,
+	:global(.snapshot-mode) .duration-section,
+	:global(.snapshot-mode) .datetime-section,
+	:global(.snapshot-mode) .total-section {
+		opacity: 1 !important;
+		transform: none !important;
+	}
+
 	.card-content {
 		display: flex;
 		flex-direction: column;

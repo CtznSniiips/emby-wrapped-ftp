@@ -366,4 +366,14 @@
 		-webkit-text-fill-color: #1db954 !important;
 		background: none !important;
 	}
+
+	:global(.snapshot-mode) .lead,
+	:global(.snapshot-mode) .big-number,
+	:global(.snapshot-mode) .subtitle,
+	:global(.snapshot-mode) .breakdown,
+	:global(.snapshot-mode) .comparison,
+	:global(.snapshot-mode) .content-counts {
+		opacity: 1 !important;
+		transform: none !important;
+	}
 </style>

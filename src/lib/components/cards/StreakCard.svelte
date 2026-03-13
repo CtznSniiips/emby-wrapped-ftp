@@ -90,4 +90,14 @@
 		padding: 0.5rem;
 		margin: -0.5rem;
 	}
-</style>
+
+	:global(.snapshot-mode) .share-container {
+		display: none !important;
+	}
+
+	:global(.snapshot-mode) .eyebrow,
+	:global(.snapshot-mode) .longest,
+	:global(.snapshot-mode) .current {
+		opacity: 1 !important;
+		transform: none !important;
+	}</style>
