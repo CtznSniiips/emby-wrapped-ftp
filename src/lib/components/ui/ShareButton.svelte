@@ -74,6 +74,8 @@
                         // BingeCard
                         ".header", ".show-reveal", ".episode-reveal",
                         ".duration-section", ".datetime-section", ".total-section",
+                        // TopContentCard
+                        ".label-section", ".poster-section", ".title-section", ".stats-section",
                         // Top5Card
                         ".header-section", ".hero-item", ".grid-item", ".total-stats",
                         // DayOfWeekCard

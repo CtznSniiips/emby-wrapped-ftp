@@ -37,10 +37,15 @@
 
 	$: hours = Math.round(topItem.minutes / 60);
 	$: label = type === "show" ? "Show" : "Movie";
-	$: currentImageUrl =
+	function proxyUrl(url: string): string {
+		return `/api/proxy-image?url=${encodeURIComponent(url)}`;
+	}
+
+	$: currentImageUrl = proxyUrl(
 		primaryImageError && topItem.tmdbImageUrl
 			? topItem.tmdbImageUrl
-			: topItem.imageUrl;
+			: topItem.imageUrl
+	);
 	$: showFallbackGradient =
 		primaryImageError && (fallbackImageError || !topItem.tmdbImageUrl);
 	$: cardId = `top-${type}-${rank}-card`;
@@ -189,6 +194,19 @@
 
 	:global(.snapshot-mode) .share-container {
 		display: none !important;
+	}
+
+	:global(.snapshot-mode) .label-section,
+	:global(.snapshot-mode) .poster-section,
+	:global(.snapshot-mode) .title-section,
+	:global(.snapshot-mode) .stats-section {
+		opacity: 1 !important;
+		transform: none !important;
+		filter: none !important;
+	}
+
+	:global(.snapshot-mode) .bg-image {
+		opacity: 0.4 !important;
 	}
 
 	/* Background */

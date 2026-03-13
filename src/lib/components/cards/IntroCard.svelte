@@ -166,6 +166,11 @@
 }
 
 	/* Reset the animated layout to a static flow */
+	:global(.snapshot-mode).card-base,
+	:global(.snapshot-mode) .intro-container {
+		height: auto !important;
+	}
+
 	:global(.snapshot-mode) .intro-container {
 		display: flex;
 		flex-direction: column;
