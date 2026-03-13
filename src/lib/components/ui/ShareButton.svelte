@@ -116,80 +116,103 @@
                     if (bridgeText) bridgeText.style.setProperty("display", "none", "important");
 
                     // ── Hide UI chrome that has no place in a share image ──────────
-                    [".time-selector-wrapper", ".scroll-indicator", ".select-arrow"]
+                    [".time-selector-wrapper", ".scroll-indicator", ".select-arrow", ".ready-hint"]
                         .forEach(sel => clonedEl.querySelectorAll<HTMLElement>(sel)
                             .forEach(e => e.style.setProperty("display", "none", "important")));
 
                     // ── IntroCard: fix wrapped-year so it doesn't bleed into WRAPPED ──
                     const wrappedYear = clonedEl.querySelector<HTMLElement>(".wrapped-year");
                     if (wrappedYear) {
-                        wrappedYear.style.setProperty("line-height", "1.1", "important");
+                        wrappedYear.style.setProperty("line-height", "1.2", "important");
                         wrappedYear.style.setProperty("margin-bottom", "0.5rem", "important");
-                        wrappedYear.style.setProperty("padding-bottom", "0.25rem", "important");
                     }
 
                     // ── TotalTimeCard: fix .unit overlapping .number ─────────────────
-                    // html2canvas mis-measures the flex column when vw-based font-sizes
-                    // are involved. Force block layout + explicit spacing on the container.
+                    // The root cause is line-height:1 on a large clamp() font. The visual
+                    // glyph descends below the CSS line box. Bump line-height on .number
+                    // and convert the flex column to block so each child stacks cleanly.
                     const bigNumber = clonedEl.querySelector<HTMLElement>(".big-number");
                     if (bigNumber) {
                         bigNumber.style.setProperty("display", "block", "important");
                         bigNumber.style.setProperty("text-align", "center", "important");
                     }
+                    // .number is a <span> — make it block so it occupies its own line
+                    clonedEl.querySelectorAll<HTMLElement>(".number").forEach(el => {
+                        el.style.setProperty("display", "block", "important");
+                        el.style.setProperty("line-height", "1.25", "important");
+                    });
                     clonedEl.querySelectorAll<HTMLElement>(".unit").forEach(el => {
                         el.style.setProperty("display", "block", "important");
-                        el.style.setProperty("margin-top", "0.75rem", "important");
+                        el.style.setProperty("margin-top", "0.5rem", "important");
                         el.style.setProperty("line-height", "1.5", "important");
                     });
 
                     // ── StreakCard: fix .value overlapping .range ────────────────────
-                    // .value has line-height:1 with a large clamp font-size; the range
-                    // date text sits immediately below with no gap.
+                    // Same line-height:1 / large clamp() issue. The glyph visually exceeds
+                    // the line box. Increase line-height and add margin below.
                     const streakValue = clonedEl.querySelector<HTMLElement>(".value");
                     if (streakValue) {
+                        streakValue.style.setProperty("line-height", "1.3", "important");
+                        streakValue.style.setProperty("margin-bottom", "1rem", "important");
                         streakValue.style.setProperty("display", "block", "important");
-                        streakValue.style.setProperty("margin-bottom", "0.75rem", "important");
-                        streakValue.style.setProperty("line-height", "1.1", "important");
-                        // The inline <span>days</span> inside .value — give it breathing room
-                        streakValue.querySelectorAll<HTMLElement>("span").forEach(s => {
-                            s.style.setProperty("display", "inline", "important");
-                            s.style.setProperty("vertical-align", "middle", "important");
-                        });
                     }
-                    // Ensure range dates have top breathing room too
                     clonedEl.querySelectorAll<HTMLElement>(".range").forEach(el => {
                         el.style.setProperty("margin-top", "0.5rem", "important");
                         el.style.setProperty("display", "block", "important");
                     });
 
-                    // ── BingeCard badge: inline-flex children don't render in html2canvas ─
-                    // Replace .badge with a flat <div> carrying the same text as a single
-                    // text node so html2canvas has nothing complex to composite.
+                    // ── BingeCard: fix episode-number bleeding into episode-label ────
+                    // line-height:1 + gradient-clip creates an invisible overflow.
+                    // Increase line-height so the line box matches the visual glyph height.
+                    clonedEl.querySelectorAll<HTMLElement>(".episode-number").forEach(el => {
+                        el.style.setProperty("line-height", "1.25", "important");
+                        el.style.setProperty("display", "block", "important");
+                    });
+                    clonedEl.querySelectorAll<HTMLElement>(".episode-label").forEach(el => {
+                        el.style.setProperty("margin-top", "0.75rem", "important");
+                        el.style.setProperty("display", "block", "important");
+                    });
+
+                    // ── BingeCard badge: rebuild as flat element for html2canvas ─────
+                    // inline-flex children can be mis-composited by html2canvas.
                     const badge = clonedEl.querySelector<HTMLElement>(".badge");
                     if (badge) {
                         const icon = badge.querySelector(".badge-icon")?.textContent ?? "✧";
                         const text = badge.querySelector(".badge-text")?.textContent ?? "BINGE MODE";
                         badge.innerHTML = "";
-                        badge.style.setProperty("display", "flex", "important");
-                        badge.style.setProperty("align-items", "center", "important");
-                        badge.style.setProperty("justify-content", "center", "important");
-                        badge.style.setProperty("background", "#ef4444", "important");
-                        badge.style.setProperty("background-image", "none", "important");
-                        badge.style.setProperty("padding", "0.5rem 1.25rem", "important");
-                        badge.style.setProperty("border-radius", "20px", "important");
-                        badge.style.setProperty("gap", "0.5rem", "important");
+                        badge.style.cssText += ";display:flex!important;align-items:center!important;" +
+                            "justify-content:center!important;background:#ef4444!important;" +
+                            "background-image:none!important;padding:0.5rem 1.25rem!important;" +
+                            "border-radius:20px!important;gap:0.5rem!important;";
                         const inner = clonedDoc.createElement("span");
-                        inner.textContent = `${icon} ${text}`;
-                        inner.style.cssText = "color:#fff;font-family:ui-monospace,monospace;" +
-                            "font-size:0.875rem;font-weight:700;letter-spacing:0.1em;" +
-                            "-webkit-text-fill-color:#fff;";
+                        inner.textContent = `${icon}  ${text}`;
+                        inner.style.cssText = "color:#fff!important;-webkit-text-fill-color:#fff!important;" +
+                            "font-family:ui-monospace,monospace;font-size:0.875rem;font-weight:700;" +
+                            "letter-spacing:0.1em;line-height:1.5;";
                         badge.appendChild(inner);
                     }
 
-                    // ── BingeCard episode-label: negative margin pulls it into the number ─
-                    clonedEl.querySelectorAll<HTMLElement>(".episode-label").forEach(el => {
-                        el.style.setProperty("margin-top", "0.75rem", "important");
-                    });
+                    // ── PersonalityCard: fix off-center unicode glyph in icon-ring ───
+                    // Geometric unicode chars (◬ ◈ ◯ etc.) have unusual font metrics;
+                    // their visual centre sits above the mathematical bounding box centre.
+                    // html2canvas exaggerates this. Compensate with padding-top.
+                    const mainIcon = clonedEl.querySelector<HTMLElement>(".main-icon");
+                    if (mainIcon) {
+                        mainIcon.style.setProperty("display", "flex", "important");
+                        mainIcon.style.setProperty("align-items", "center", "important");
+                        mainIcon.style.setProperty("justify-content", "center", "important");
+                        mainIcon.style.setProperty("line-height", "1", "important");
+                        mainIcon.style.setProperty("padding-top", "0.15em", "important");
+                        mainIcon.style.setProperty("width", "100%", "important");
+                        mainIcon.style.setProperty("height", "100%", "important");
+                    }
+                    // Also fix the icon-ring to be a proper flex container
+                    const iconRing = clonedEl.querySelector<HTMLElement>(".icon-ring");
+                    if (iconRing) {
+                        iconRing.style.setProperty("display", "flex", "important");
+                        iconRing.style.setProperty("align-items", "center", "important");
+                        iconRing.style.setProperty("justify-content", "center", "important");
+                    }
 
                     // ── 5. GenreCard: replace conic-gradient ring with SVG ──
                     // html2canvas doesn't support conic-gradient.
