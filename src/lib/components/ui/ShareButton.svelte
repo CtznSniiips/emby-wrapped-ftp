@@ -15,110 +15,127 @@
         isGenerating = true;
 
         try {
-            // Capture with html2canvas
             const canvas = await html2canvas(element, {
                 backgroundColor: "#0a0a0a",
                 scale: 2,
                 useCORS: true,
-                allowTaint: true,
                 logging: false,
                 onclone: (clonedDoc) => {
-                    const clonedElement = clonedDoc.getElementById(targetId);
-                    if (!clonedElement) return;
+                    const el = clonedDoc.getElementById(targetId);
+                    if (!el) return;
 
-                    clonedElement.classList.add('snapshot-mode');
-                    clonedElement.style.opacity = '1';
-                    clonedElement.style.transform = 'none';
-                    clonedElement.querySelectorAll('*').forEach((el) => {
-                        const style = window.getComputedStyle(el);
-                        const fill = style.getPropertyValue('-webkit-text-fill-color');
-                        const clip = style.getPropertyValue('-webkit-background-clip');
+                    // Mark snapshot mode for any CSS that needs it
+                    el.classList.add("snapshot-mode");
 
-                        if (fill === 'transparent' || clip === 'text') {
-                            const htmlEl = el as HTMLElement;
-                            // Grab the gradient to pick a representative solid color,
-                            // or just fall back to white which reads fine on dark backgrounds
-                            const bg = style.backgroundImage;
-                            let color = '#ffffff';
-                            // Pull the first color stop from the gradient if possible
-                            const match = bg.match(/rgba?\([^)]+\)|#[0-9a-f]{3,8}/i);
-                            if (match) color = match[0];
+                    // ── 1. Hide the share button itself ──────────────────────
+                    el.querySelectorAll<HTMLElement>(".share-container").forEach(
+                        (e) => (e.style.display = "none")
+                    );
 
-                            htmlEl.style.setProperty('-webkit-text-fill-color', color, 'important');
-                            htmlEl.style.setProperty('background', 'none', 'important');
-                            htmlEl.style.setProperty('background-image', 'none', 'important');
-                            htmlEl.style.setProperty('-webkit-background-clip', 'unset', 'important');
-                            htmlEl.style.setProperty('background-clip', 'unset', 'important');
-                            htmlEl.style.setProperty('color', color, 'important');
+                    // ── 2. Fix gradient text (html2canvas can't render -webkit-background-clip:text) ──
+                    // Walk every element; if it uses the gradient-clip trick, replace with a solid color.
+                    el.querySelectorAll<HTMLElement>("*").forEach((node) => {
+                        const s = window.getComputedStyle(node);
+                        if (
+                            s.getPropertyValue("-webkit-text-fill-color") === "transparent" ||
+                            s.getPropertyValue("-webkit-background-clip") === "text"
+                        ) {
+                            const bg = s.backgroundImage;
+                            // Pull the first recognisable colour stop from the gradient
+                            const m = bg.match(/rgba?\([^)]+\)|#[0-9a-f]{3,8}/i);
+                            const color = m ? m[0] : "#ffffff";
+                            node.style.setProperty("-webkit-text-fill-color", color, "important");
+                            node.style.setProperty("color", color, "important");
+                            node.style.setProperty("background", "none", "important");
+                            node.style.setProperty("background-image", "none", "important");
+                            node.style.setProperty("-webkit-background-clip", "unset", "important");
+                            node.style.setProperty("background-clip", "unset", "important");
                         }
                     });
 
-                    const yearLockup = clonedElement.querySelector('.year-lockup') as HTMLElement;
-                    if (yearLockup) {
-                        yearLockup.style.position = 'relative';
-                        yearLockup.style.top = 'auto';
-                        yearLockup.style.left = 'auto';
-                        yearLockup.style.transform = 'none';
-                        yearLockup.style.opacity = '1';
+                    // ── 3. Reveal ALL animated elements ──────────────────────
+                    // Each card hides sections with opacity:0 + transform + sometimes filter.
+                    // We reset every element that is currently invisible.
+                    el.querySelectorAll<HTMLElement>("*").forEach((node) => {
+                        const s = window.getComputedStyle(node);
+                        // Only touch elements that are actually hidden
+                        if (parseFloat(s.opacity) < 0.1) {
+                            node.style.setProperty("opacity", "1", "important");
+                            node.style.setProperty("transform", "none", "important");
+                            node.style.setProperty("filter", "none", "important");
+                            node.style.setProperty("visibility", "visible", "important");
+                        } else if (s.filter && s.filter !== "none") {
+                            // Visible but still blurred (e.g. poster entering mid-animation)
+                            node.style.setProperty("filter", "none", "important");
+                        }
+                    });
+
+                    // ── 4. IntroCard layout fix ───────────────────────────────
+                    // year-lockup is position:absolute and overlaps the profile section.
+                    // Convert the container to a simple vertical stack.
+                    const introContainer = el.querySelector<HTMLElement>(".intro-container");
+                    if (introContainer) {
+                        introContainer.style.setProperty("height", "auto", "important");
+                        introContainer.style.setProperty("justify-content", "flex-start", "important");
+                        introContainer.style.setProperty("padding-top", "3rem", "important");
+                        introContainer.style.setProperty("gap", "2rem", "important");
                     }
-                    const bridgeText = clonedElement.querySelector('.bridge-text') as HTMLElement;
-                    if (bridgeText) bridgeText.style.display = 'none';
+                    const yearLockup = el.querySelector<HTMLElement>(".year-lockup");
+                    if (yearLockup) {
+                        yearLockup.style.setProperty("position", "relative", "important");
+                        yearLockup.style.setProperty("top", "auto", "important");
+                        yearLockup.style.setProperty("left", "auto", "important");
+                        yearLockup.style.setProperty("transform", "none", "important");
+                        yearLockup.style.setProperty("opacity", "1", "important");
+                    }
+                    const bridgeText = el.querySelector<HTMLElement>(".bridge-text");
+                    if (bridgeText) {
+                        bridgeText.style.setProperty("display", "none", "important");
+                    }
 
-                    const heroRing = clonedElement.querySelector('.hero-ring') as HTMLElement;
+                    // ── 5. GenreCard: replace conic-gradient ring with SVG ───
+                    // html2canvas doesn't support conic-gradient.
+                    const heroRing = el.querySelector<HTMLElement>(".hero-ring");
                     if (heroRing) {
-                        const percent = parseFloat(heroRing.style.getPropertyValue('--percent') || '0');
-                        const color = heroRing.style.getPropertyValue('--color') || '#1db954';
-                        const r = 54;
-                        const cx = 60;
-                        const cy = 60;
-                        const circumference = 2 * Math.PI * r;
-                        const filled = (percent / 100) * circumference;
-
-                        heroRing.style.background = 'none';
-                        heroRing.style.position = 'relative';
+                        const percent = parseFloat(
+                            heroRing.style.getPropertyValue("--percent") || "0"
+                        );
+                        const ringColor =
+                            heroRing.style.getPropertyValue("--color") || "#1db954";
+                        const r = 54, cx = 60, cy = 60;
+                        const circ = 2 * Math.PI * r;
+                        const filled = (percent / 100) * circ;
+                        heroRing.style.background = "none";
+                        heroRing.style.position = "relative";
                         heroRing.innerHTML = `
-                            <svg width="120" height="120" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
+                            <svg width="120" height="120"
+                                 style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
                                 <circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
                                     stroke="rgba(255,255,255,0.1)" stroke-width="12"/>
                                 <circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
-                                    stroke="${color}" stroke-width="12"
-                                    stroke-dasharray="${filled} ${circumference}"
+                                    stroke="${ringColor}" stroke-width="12"
+                                    stroke-dasharray="${filled} ${circ}"
                                     stroke-linecap="round"/>
                             </svg>
-                            <div style="position:relative;z-index:1;width:90px;height:90px;border-radius:50%;
-                                        background:#0a0a0a;display:flex;align-items:center;justify-content:center;">
-                                <span style="font-family:monospace;font-size:1.25rem;font-weight:700;color:white;">
+                            <div style="position:relative;z-index:1;width:90px;height:90px;
+                                        border-radius:50%;background:#0a0a0a;
+                                        display:flex;align-items:center;justify-content:center;">
+                                <span style="font-family:monospace;font-size:1.25rem;
+                                             font-weight:700;color:#fff;">
                                     ${Math.round(percent)}%
                                 </span>
                             </div>`;
                     }
-
-                    clonedElement.querySelectorAll('[class]').forEach((el) => {
-                        const htmlEl = el as HTMLElement;
-                        // Use the cloned doc's own getComputedStyle so we see the
-                        // snapshot-mode CSS overrides that were just applied above.
-                        const clonedWin = clonedElement.ownerDocument.defaultView;
-                        if (!clonedWin) return;
-                        const computed = clonedWin.getComputedStyle(htmlEl);
-                        if (computed.opacity === '0') {
-                            htmlEl.style.setProperty('opacity', '1', 'important');
-                            htmlEl.style.setProperty('transform', 'none', 'important');
-                        }
-                    });
                 },
             });
 
             const image = canvas.toDataURL("image/png");
 
-            // Try to share, otherwise download
             if (navigator.share) {
                 const blob = await (await fetch(image)).blob();
                 const file = new File([blob], fileName, { type: "image/png" });
 
-                if (
-                    navigator.canShare &&
-                    navigator.canShare({ files: [file] })
-                ) {
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     await navigator.share({
                         files: [file],
                         title: "My Emby Wrapped",
@@ -132,15 +149,17 @@
             }
         } catch (err) {
             console.error("Sharing failed:", err);
-            // Fallback: just download
             try {
-                const canvas = await html2canvas(element, {
-                    backgroundColor: "#0a0a0a",
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                });
-                downloadImage(canvas.toDataURL("image/png"));
+                const element = document.getElementById(targetId);
+                if (element) {
+                    const canvas = await html2canvas(element, {
+                        backgroundColor: "#0a0a0a",
+                        scale: 2,
+                        useCORS: true,
+                        logging: false,
+                    });
+                    downloadImage(canvas.toDataURL("image/png"));
+                }
             } catch {
                 alert("Could not generate image. Please try again.");
             }
@@ -173,7 +192,7 @@
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
-        background: rgba(20, 20, 20, 0.95); 
+        background: rgba(20, 20, 20, 0.95);
         border: 1px solid rgba(255, 255, 255, 0.15);
         padding: 0.625rem 1.25rem;
         border-radius: 999px;
@@ -214,7 +233,6 @@
         pointer-events: none;
     }
 
-    /* Mobile: keep the label visible, just make button slightly more compact */
     @media (max-width: 600px) {
         .share-btn {
             padding: 0.625rem 1rem;
