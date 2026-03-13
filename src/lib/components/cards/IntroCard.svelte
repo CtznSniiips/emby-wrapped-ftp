@@ -3,7 +3,6 @@
 	import { goto } from "$app/navigation";
 	import { UNICODE } from "$lib/utils/format";
 	import type { UserStats } from "$lib/server/stats";
-	import ShareButton from "../ui/ShareButton.svelte";
 
 	export let stats: UserStats;
 	export let serverName: string;
@@ -51,10 +50,6 @@
 </script>
 
 <div class="card-base" class:visible id="intro-card">
-	<div class="share-container">
-		<ShareButton targetId="intro-card" fileName="emby-wrapped-intro.png" />
-	</div>
-
 	<div class="intro-container">
 		<!-- Phase 1: Year Reveal -->
 		<div
