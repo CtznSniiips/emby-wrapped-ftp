@@ -362,8 +362,8 @@
 	}
 
 	:global(.snapshot-mode) .number {
+		color: #1db954 !important;
+		-webkit-text-fill-color: #1db954 !important;
 		background: none !important;
-		-webkit-text-fill-color: initial !important;
-		color: white !important; /* Fallback to solid white for readabilty */
 	}
 </style>

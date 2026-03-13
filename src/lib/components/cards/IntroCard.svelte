@@ -159,6 +159,38 @@
 		display: none !important;
 	}
 
+	:global(.snapshot-mode) .wrapped-label {
+    color: #1db954 !important;
+    -webkit-text-fill-color: #1db954 !important;
+    background: none !important;
+}
+
+	/* Reset the animated layout to a static flow */
+	:global(.snapshot-mode) .intro-container {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1.5rem;
+	}
+
+	:global(.snapshot-mode) .year-lockup {
+		position: relative !important;
+		top: auto !important;
+		left: auto !important;
+		transform: none !important;
+		opacity: 1 !important;
+	}
+
+	:global(.snapshot-mode) .bridge-text {
+		display: none !important;
+	}
+
+	:global(.snapshot-mode) .profile-section {
+		opacity: 1 !important;
+		transform: none !important;
+		margin-top: 0 !important;
+	}
+
 	.intro-container {
 		display: flex;
 		flex-direction: column;

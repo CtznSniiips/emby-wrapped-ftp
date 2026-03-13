@@ -24,11 +24,98 @@
                 logging: false,
                 onclone: (clonedDoc) => {
                     const clonedElement = clonedDoc.getElementById(targetId);
-                    if (clonedElement) {
-                        clonedElement.classList.add("snapshot-mode");
-                        clonedElement.style.opacity = "1";
-                        clonedElement.style.transform = "none";
+                    if (!clonedElement) return;
+
+                    clonedElement.classList.add('snapshot-mode');
+                    clonedElement.style.opacity = '1';
+                    clonedElement.style.transform = 'none';
+
+                    // Fix 1: Universal gradient text fix
+                    // html2canvas doesn't support -webkit-background-clip:text so we
+                    // walk every element and replace transparent text-fill with solid colors
+                    clonedElement.querySelectorAll('*').forEach((el) => {
+                        const style = window.getComputedStyle(el);
+                        const fill = style.getPropertyValue('-webkit-text-fill-color');
+                        const clip = style.getPropertyValue('-webkit-background-clip');
+
+                        if (fill === 'transparent' || clip === 'text') {
+                            const htmlEl = el as HTMLElement;
+                            // Grab the gradient to pick a representative solid color,
+                            // or just fall back to white which reads fine on dark backgrounds
+                            const bg = style.backgroundImage;
+                            let color = '#ffffff';
+                            // Pull the first color stop from the gradient if possible
+                            const match = bg.match(/rgba?\([^)]+\)|#[0-9a-f]{3,8}/i);
+                            if (match) color = match[0];
+
+                            htmlEl.style.setProperty('-webkit-text-fill-color', color, 'important');
+                            htmlEl.style.setProperty('background', 'none', 'important');
+                            htmlEl.style.setProperty('background-image', 'none', 'important');
+                            htmlEl.style.setProperty('-webkit-background-clip', 'unset', 'important');
+                            htmlEl.style.setProperty('background-clip', 'unset', 'important');
+                            htmlEl.style.setProperty('color', color, 'important');
+                        }
+                    });
+
+                    // Fix 2: IntroCard layout — reset animated absolute positioning
+                    // so year + profile don't overlap
+                    const yearLockup = clonedElement.querySelector('.year-lockup') as HTMLElement;
+                    if (yearLockup) {
+                        yearLockup.style.position = 'relative';
+                        yearLockup.style.top = 'auto';
+                        yearLockup.style.left = 'auto';
+                        yearLockup.style.transform = 'none';
+                        yearLockup.style.opacity = '1';
                     }
+                    const bridgeText = clonedElement.querySelector('.bridge-text') as HTMLElement;
+                    if (bridgeText) bridgeText.style.display = 'none';
+
+                    // Fix 3: GenreCard conic-gradient — replace with SVG ring
+                    const heroRing = clonedElement.querySelector('.hero-ring') as HTMLElement;
+                    if (heroRing) {
+                        const percent = parseFloat(heroRing.style.getPropertyValue('--percent') || '0');
+                        const color = heroRing.style.getPropertyValue('--color') || '#1db954';
+                        const r = 54;
+                        const cx = 60;
+                        const cy = 60;
+                        const circumference = 2 * Math.PI * r;
+                        const filled = (percent / 100) * circumference;
+
+                        heroRing.style.background = 'none';
+                        heroRing.style.position = 'relative';
+                        heroRing.innerHTML = `
+                            <svg width="120" height="120" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
+                                <circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
+                                    stroke="rgba(255,255,255,0.1)" stroke-width="12"/>
+                                <circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
+                                    stroke="${color}" stroke-width="12"
+                                    stroke-dasharray="${filled} ${circumference}"
+                                    stroke-linecap="round"/>
+                            </svg>
+                            <div style="position:relative;z-index:1;width:90px;height:90px;border-radius:50%;
+                                        background:#0a0a0a;display:flex;align-items:center;justify-content:center;">
+                                <span style="font-family:monospace;font-size:1.25rem;font-weight:700;color:white;">
+                                    ${Math.round(percent)}%
+                                </span>
+                            </div>`;
+                    }
+
+                    // Fix 4: Force all images to be visible (poster images)
+                    clonedElement.querySelectorAll('img').forEach((img) => {
+                        const htmlImg = img as HTMLImageElement;
+                        htmlImg.crossOrigin = 'anonymous';
+                        htmlImg.style.opacity = '1';
+                    });
+
+                    // Fix 5: Make all animated elements visible regardless of phase
+                    clonedElement.querySelectorAll('[class]').forEach((el) => {
+                        const htmlEl = el as HTMLElement;
+                        const computedOpacity = window.getComputedStyle(htmlEl).opacity;
+                        if (computedOpacity === '0') {
+                            htmlEl.style.opacity = '1';
+                            htmlEl.style.transform = 'none';
+                        }
+                    });
                 },
             });
 
@@ -107,8 +194,8 @@
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s ease;
-        min-height: 44px;
-        min-width: 44px;
+        min-height: 36px;
+        min-width: 36px;
     }
 
     .share-btn:hover:not(:disabled) {
