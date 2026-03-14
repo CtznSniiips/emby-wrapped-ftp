@@ -209,11 +209,9 @@
 		opacity: 1 !important;
 	}
 
-	/* html2canvas drops filter/transform on images; use opacity-only darkening */
+	/* img is replaced with a canvas in onclone; hide the original */
 	:global(.snapshot-mode) .bg-image img {
-		filter: none !important;
-		transform: none !important;
-		opacity: 0.18 !important;
+		display: none !important;
 	}
 
 	/* Background */

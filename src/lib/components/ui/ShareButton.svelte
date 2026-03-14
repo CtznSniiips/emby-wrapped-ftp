@@ -95,16 +95,29 @@
                     });
 
                     // ── 4a. TopContentCard background fix ───────────────────────
-                    // html2canvas drops filter:blur/brightness and ignores
-                    // transform:scale on images. Use opacity-only darkening instead.
-                    clonedEl.querySelectorAll<HTMLElement>(".bg-image").forEach(el => {
-                        el.style.setProperty("opacity", "1", "important");
-                        el.classList.add("loaded");
-                    });
-                    clonedEl.querySelectorAll<HTMLElement>(".bg-image img").forEach(el => {
-                        el.style.setProperty("filter", "none", "important");
-                        el.style.setProperty("transform", "none", "important");
-                        el.style.setProperty("opacity", "0.18", "important");
+                    // html2canvas reads <canvas> as raw pixels, so we can apply
+                    // blur + brightness by drawing the image onto a canvas with
+                    // ctx.filter — this works even though CSS filter on <img> is ignored.
+                    clonedEl.querySelectorAll<HTMLElement>(".bg-image").forEach(bgDiv => {
+                        bgDiv.style.setProperty("opacity", "1", "important");
+                        bgDiv.classList.add("loaded");
+                        const img = bgDiv.querySelector("img");
+                        if (!img) return;
+                        // Size canvas to match the bg-image container (inset:-30px makes it
+                        // larger than the card, so use the natural image dimensions)
+                        const W = img.naturalWidth  || 400;
+                        const H = img.naturalHeight || 600;
+                        const canvas = clonedDoc.createElement("canvas");
+                        canvas.width  = W;
+                        canvas.height = H;
+                        canvas.style.cssText =
+                            "width:100%;height:100%;object-fit:cover;display:block;";
+                        const ctx = canvas.getContext("2d")!;
+                        // Apply blur + heavy darkening via canvas filter
+                        ctx.filter = "blur(20px) brightness(0.2) saturate(1.3)";
+                        ctx.drawImage(img as HTMLImageElement, 0, 0, W, H);
+                        // Replace the img with the canvas
+                        img.replaceWith(canvas);
                     });
 
                     // ── 4. IntroCard layout fix ─────────────────────────────
