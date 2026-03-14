@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.2] - 2026-03-14
+- **Share button fixes**: Fixed rendering issues on share button images
+
 ## [2.0.1] - 2026-03-12
 - **Login rate limiting**: Added rate limiting for failed logins to mitigate brute force attempts
 
