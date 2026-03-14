@@ -94,6 +94,19 @@
                         });
                     });
 
+                    // ── 4a. TopContentCard background fix ───────────────────────
+                    // html2canvas drops filter:blur/brightness and ignores
+                    // transform:scale on images. Use opacity-only darkening instead.
+                    clonedEl.querySelectorAll<HTMLElement>(".bg-image").forEach(el => {
+                        el.style.setProperty("opacity", "1", "important");
+                        el.classList.add("loaded");
+                    });
+                    clonedEl.querySelectorAll<HTMLElement>(".bg-image img").forEach(el => {
+                        el.style.setProperty("filter", "none", "important");
+                        el.style.setProperty("transform", "none", "important");
+                        el.style.setProperty("opacity", "0.18", "important");
+                    });
+
                     // ── 4. IntroCard layout fix ─────────────────────────────
                     // .year-lockup is position:absolute and overlaps .profile-section.
                     // Convert .intro-container to a simple vertical stack.

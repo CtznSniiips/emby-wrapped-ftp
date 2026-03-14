@@ -206,7 +206,14 @@
 	}
 
 	:global(.snapshot-mode) .bg-image {
-		opacity: 0.4 !important;
+		opacity: 1 !important;
+	}
+
+	/* html2canvas drops filter/transform on images; use opacity-only darkening */
+	:global(.snapshot-mode) .bg-image img {
+		filter: none !important;
+		transform: none !important;
+		opacity: 0.18 !important;
 	}
 
 	/* Background */
