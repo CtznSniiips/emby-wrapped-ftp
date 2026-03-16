@@ -1,15 +1,1 @@
-<svg width="256" height="72" viewBox="0 0 256 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="seerrGrad" x1="8" y1="8" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#66E0FF"/>
-      <stop offset="1" stop-color="#1A7DFF"/>
-    </linearGradient>
-  </defs>
-  <rect x="4" y="4" width="64" height="64" rx="18" fill="url(#seerrGrad)"/>
-  <path d="M22 24C22 21.7909 23.7909 20 26 20H46C48.2091 20 50 21.7909 50 24V48C50 50.2091 48.2091 52 46 52H26C23.7909 52 22 50.2091 22 48V24Z" fill="white" fill-opacity="0.15"/>
-  <path d="M31 38C31 35.2386 33.2386 33 36 33H40C42.7614 33 45 35.2386 45 38V39C45 41.7614 42.7614 44 40 44H36C33.2386 44 31 41.7614 31 39V38Z" fill="white"/>
-  <path d="M84 48V23H107C116 23 121 28 121 35C121 42 116 48 107 48H84ZM95 40H106C108.8 40 110 38 110 35.5C110 33 108.8 31 106 31H95V40Z" fill="white"/>
-  <path d="M126 48V23H158V31H136V32.8H156V39.8H136V40H158V48H126Z" fill="white"/>
-  <path d="M163 48V23H195V31H173V32.8H193V39.8H173V40H195V48H163Z" fill="white"/>
-  <path d="M200 48V23H225C232 23 236 27.2 236 33.2C236 37.7 233.8 40.6 230.1 42L237 48H224.2L218.9 43.4H210V48H200ZM210 36.6H222.2C224.2 36.6 225.3 35.7 225.3 34C225.3 32.3 224.2 31.4 222.2 31.4H210V36.6Z" fill="white"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" fill="none" viewBox="0 0 96 96"><path fill="url(#paint0_linear)" fill-rule="evenodd" d="M48 96C74.5097 96 96 74.5097 96 48C96 21.4903 74.5097 0 48 0C21.4903 0 0 21.4903 0 48C0 74.5097 21.4903 96 48 96ZM80.0001 52C80.0001 67.464 67.4641 80 52.0001 80C36.5361 80 24.0001 67.464 24.0001 52C24.0001 49.1303 24.4318 46.3615 25.2338 43.7548C27.4288 48.6165 32.3194 52 38.0001 52C45.7321 52 52.0001 45.732 52.0001 38C52.0001 32.3192 48.6166 27.4287 43.755 25.2337C46.3616 24.4317 49.1304 24 52.0001 24C67.4641 24 80.0001 36.536 80.0001 52Z" clip-rule="evenodd"/><path fill="#131928" fill-rule="evenodd" d="M80.0002 52C80.0002 67.464 67.4642 80 52.0002 80C36.864 80 24.5329 67.9897 24.017 52.9791C24.0057 53.318 24 53.6583 24 54C24 70.5685 37.4315 84 54 84C70.5685 84 84 70.5685 84 54C84 37.4315 70.5685 24 54 24C53.6597 24 53.3207 24.0057 52.9831 24.0169C67.9919 24.5347 80.0002 36.865 80.0002 52Z" clip-rule="evenodd" opacity=".2"/><path fill="url(#paint1_linear)" fill-rule="evenodd" d="M48 12C28.1177 12 12 28.1177 12 48C12 50.2091 10.2091 52 8 52C5.79086 52 4 50.2091 4 48C4 23.6995 23.6995 4 48 4C50.2091 4 52 5.79086 52 8C52 10.2091 50.2091 12 48 12Z" clip-rule="evenodd"/><defs><linearGradient id="paint0_linear" x1="48" x2="117.5" y1="0" y2="69.5" gradientUnits="userSpaceOnUse"><stop stop-color="#C395FC"/><stop offset="1" stop-color="#4F65F5"/></linearGradient><linearGradient id="paint1_linear" x1="28" x2="28" y1="8" y2="48" gradientUnits="userSpaceOnUse"><stop stop-color="#fff" stop-opacity=".4"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs></svg>
