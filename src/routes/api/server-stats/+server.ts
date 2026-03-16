@@ -16,8 +16,85 @@ export interface ServerStats {
     topShows: TopItem[];
     topMovies: TopItem[];
     music: MusicStats;
+    seerRequests: {
+        totalRequests: number;
+        requestsByUser: Array<{ name: string; count: number }>;
+    } | null;
     year: number;
     timeRangeLabel: string;
+}
+
+interface SeerRequest {
+    id: number;
+    createdAt: string;
+    requestedBy?: {
+        id?: number;
+        displayName?: string;
+        username?: string;
+    };
+}
+
+interface SeerRequestsResponse {
+    results?: SeerRequest[];
+    pageInfo?: {
+        pages?: number;
+    };
+}
+
+async function fetchSeerRequestStats(timeRange: ReturnType<typeof parseTimeRange>): Promise<ServerStats['seerRequests']> {
+    const seerUrl = env.SEER_URL?.trim();
+    const seerApiKey = env.SEER_API_KEY?.trim();
+    if (!seerUrl || !seerApiKey) return null;
+
+    try {
+        const normalizedUrl = seerUrl.replace(/\/$/, '');
+        const allRequests: SeerRequest[] = [];
+        let page = 1;
+        let totalPages = 1;
+
+        while (page <= totalPages) {
+            const response = await fetch(`${normalizedUrl}/api/v1/request?page=${page}&take=100`, {
+                headers: {
+                    'X-Api-Key': seerApiKey,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                console.warn(`Failed to fetch Seer requests: ${response.status}`);
+                return null;
+            }
+
+            const data: SeerRequestsResponse = await response.json();
+            const pageResults = data.results || [];
+            allRequests.push(...pageResults);
+            totalPages = Math.max(data.pageInfo?.pages || 1, 1);
+            page++;
+        }
+
+        const requestsInTimeRange = allRequests.filter((request) =>
+            matchesTimeRange(request.createdAt, timeRange)
+        );
+
+        const requestsByUserMap = new Map<string, number>();
+        for (const request of requestsInTimeRange) {
+            const user = request.requestedBy;
+            const userName = user?.displayName || user?.username || 'Unknown User';
+            requestsByUserMap.set(userName, (requestsByUserMap.get(userName) || 0) + 1);
+        }
+
+        const requestsByUser = [...requestsByUserMap.entries()]
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+
+        return {
+            totalRequests: requestsInTimeRange.length,
+            requestsByUser
+        };
+    } catch (e) {
+        console.warn('Failed to fetch Seer request stats:', e);
+        return null;
+    }
 }
 
 // Cache for server stats (expires after 5 minutes)
@@ -281,6 +358,8 @@ export const GET: RequestHandler = async ({ url, cookies }) => {  // add cookies
             }))
         };
 
+        const seerRequests = await fetchSeerRequestStats(timeRange);
+
         const stats: ServerStats = {
             totalUsers: users.length,
             totalMinutes,
@@ -291,6 +370,7 @@ export const GET: RequestHandler = async ({ url, cookies }) => {  // add cookies
             topShows,
             topMovies,
             music: musicStats,
+            seerRequests,
             year: timeRange.year,
             timeRangeLabel: periodParam
         };

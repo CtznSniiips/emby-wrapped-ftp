@@ -180,6 +180,7 @@
             cards.push('content');
             if (serverStats.topShows?.length > 0) cards.push('top_shows');
             if (serverStats.topMovies?.length > 0) cards.push('top_movies');
+            if (serverStats.seerRequests) cards.push('seer_requests');
             if (serverStats.music && serverStats.music.totalMinutes > 0) cards.push('music');
         }
         cards.push('cta');
@@ -439,7 +440,36 @@
 			/>
 		{/if}
 
-		<!-- Card 5: Music Summary (if exists) -->
+		<!-- Card 5: Seer Requests -->
+		{#if visibleCards[currentIndex] === 'seer_requests' && serverStats?.seerRequests}
+			<div class="card-base">
+				<div class="card-content seer-card">
+					<p class="card-label">
+						<span class="unicode">{UNICODE.sparkle}</span>
+						In {displayPeriod}, our community made
+					</p>
+
+					<div class="giant-stat">
+						<span class="stat-number font-display">
+							<AnimatedNumber value={serverStats.seerRequests.totalRequests} duration={2000} />
+						</span>
+						<span class="stat-unit">REQUESTS</span>
+					</div>
+
+					<p class="seer-breakdown-title">User breakdown</p>
+					<div class="seer-breakdown">
+						{#each serverStats.seerRequests.requestsByUser as userReq}
+							<p class="seer-row">
+								<span>{userReq.name}</span>
+								<span class="font-mono">{userReq.count} request{userReq.count === 1 ? '' : 's'}</span>
+							</p>
+						{/each}
+					</div>
+				</div>
+			</div>
+		{/if}
+
+		<!-- Card 6: Music Summary (if exists) -->
         {#if visibleCards[currentIndex] === 'music' && serverStats}
 			<MusicSummaryCard music={serverStats.music} />
 		{/if}
@@ -1263,4 +1293,34 @@
 		font-size: 0.6rem;
 		color: rgba(255, 255, 255, 0.5);
 	}
+
+	.seer-card {
+		max-width: 520px;
+		width: 100%;
+		gap: 1rem;
+	}
+
+	.seer-breakdown-title {
+		font-size: 0.95rem;
+		opacity: 0.85;
+		margin-top: 0.5rem;
+	}
+
+	.seer-breakdown {
+		width: 100%;
+		max-width: 420px;
+		background: rgba(255, 255, 255, 0.04);
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		border-radius: 12px;
+		padding: 0.8rem 1rem;
+	}
+
+	.seer-row {
+		display: flex;
+		justify-content: space-between;
+		gap: 1rem;
+		margin: 0.35rem 0;
+		font-size: 0.95rem;
+	}
+
 </style>
