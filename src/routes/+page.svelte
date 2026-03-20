@@ -8,6 +8,7 @@
 	import Top5Card from "$lib/components/cards/Top5Card.svelte";
     import MusicSummaryCard from "$lib/components/cards/MusicSummaryCard.svelte";
 	import SeerrRequestsCard from "$lib/components/cards/SeerrRequestsCard.svelte";
+	import embywrappedLogo from "$lib/assets/embywrapped-logo.png";
 
 	import type { PageData } from './$types';
 
@@ -278,6 +279,13 @@
 						<span>{UNICODE.dots}</span>
 						<span>{UNICODE.diamond}</span>
 					</div>
+
+					<img
+						src={embywrappedLogo}
+						alt="Emby Wrapped logo"
+						class="community-logo"
+						class:show={introPhase >= 2}
+					/>
 
 					<h1
 						class="big-title font-display"
@@ -629,6 +637,7 @@
 
 	/* Animations */
 	.unicode-line,
+	.community-logo,
 	.big-title,
 	.server-name,
 	.tap-hint,
@@ -649,6 +658,7 @@
 	}
 
 	.unicode-line.show,
+	.community-logo.show,
 	.big-title.show,
 	.server-name.show,
 	.tap-hint.show,
@@ -694,6 +704,13 @@
 		font-weight: 700;
 		line-height: 1;
 		margin: 0;
+	}
+
+	.community-logo {
+		width: min(280px, 70vw);
+		height: auto;
+		margin-top: 0.5rem;
+		margin-bottom: -0.5rem;
 	}
 
 	.big-title .year {
