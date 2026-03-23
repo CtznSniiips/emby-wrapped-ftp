@@ -921,26 +921,36 @@ export async function aggregateUserStats(userId: string, username: string, timeR
     } : null;
 
     // Process LiveTV stats (TvChannel items)
+    // Group by normalized channel NAME (not item_id) because Emby's playback reporting
+    // can assign different item_ids to the same physical channel across sessions/tuners.
+    // We also keep the first-seen item_id per channel to use for logo fetching.
     let liveTvStats: LiveTvStats | undefined;
     const livetvActivity = videoActivity.filter(a => a.item_type.toLowerCase() === 'tvchannel');
     if (livetvActivity.length > 0) {
-        const channelMap = new Map<string, { minutes: number; count: number; name: string }>();
+        const channelMap = new Map<string, { minutes: number; count: number; name: string; firstId: string }>();
         for (const activity of livetvActivity) {
             const id = String(activity.item_id);
-            const minutes = parseInt(activity.duration || '0', 10) / 60;
-            const existing = channelMap.get(id) || { minutes: 0, count: 0, name: activity.item_name };
-            existing.minutes += minutes;
+            // Normalize name for deduplication: trim + collapse whitespace + lowercase key
+            const nameKey = activity.item_name.trim().toLowerCase().replace(/\s+/g, ' ');
+            const existing = channelMap.get(nameKey) || {
+                minutes: 0,
+                count: 0,
+                name: activity.item_name.trim(),
+                firstId: id
+            };
+            existing.minutes += parseInt(activity.duration || '0', 10) / 60;
             existing.count += 1;
-            channelMap.set(id, existing);
+            channelMap.set(nameKey, existing);
         }
         const liveTvTotalMinutes = Math.round([...channelMap.values()].reduce((s, c) => s + c.minutes, 0));
-        const topChannels: LiveTvChannelStat[] = [...channelMap.entries()]
-            .sort((a, b) => b[1].minutes - a[1].minutes)
+        const topChannels: LiveTvChannelStat[] = [...channelMap.values()]
+            .sort((a, b) => b.minutes - a.minutes)
             .slice(0, 5)
-            .map(([id, stats]) => ({
-                id,
+            .map((stats) => ({
+                id: stats.firstId,
                 name: stats.name,
-                logoUrl: emby.getImageUrl(id, 'Primary', 400),
+                // Use the LiveTV-specific channel logo endpoint, not the VOD Items endpoint
+                logoUrl: emby.getLiveTvChannelLogoUrl(stats.firstId, 400),
                 minutes: Math.round(stats.minutes),
                 count: stats.count
             }));

@@ -293,6 +293,14 @@ class EmbyClient {
     }
 
     /**
+     * Get logo URL for a Live TV channel
+     * Uses /LiveTv/Channels/{id}/Images/Primary — different from the VOD Items endpoint
+     */
+    getLiveTvChannelLogoUrl(channelId: string, maxWidth: number = 400): string {
+        return `${this.baseUrl}/LiveTv/Channels/${channelId}/Images/Primary?maxWidth=${maxWidth}&api_key=${this.apiKey}`;
+    }
+
+    /**
      * Get API base URL
      */
     getApiBaseUrl(): string {
