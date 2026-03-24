@@ -90,6 +90,19 @@ export interface BingeSession {
     totalMinutes: number;
 }
 
+export interface LiveTvChannelStat {
+    id: string;
+    name: string;
+    logoUrl: string;
+    minutes: number;
+    count: number;
+}
+
+export interface LiveTvStats {
+    totalMinutes: number;
+    topChannels: LiveTvChannelStat[];
+}
+
 export interface MusicStats {
     totalMinutes: number;
     trackCount: number;
@@ -190,6 +203,9 @@ export interface UserStats {
 
     // Music (optional)
     music?: MusicStats;
+
+    // Live TV (optional)
+    liveTv?: LiveTvStats;
 
     // Primary genre for personality (most watched)
     primaryGenre: string | null;
@@ -904,6 +920,51 @@ export async function aggregateUserStats(userId: string, username: string, timeR
         type: sortedActivity[sortedActivity.length - 1].item_type
     } : null;
 
+    // Process LiveTV stats (TvChannel items)
+    // The item_id in playback logs for TvChannel entries is the airing/program ID,
+    // NOT the channel's own item ID. We must fetch the real channel list from Emby
+    // and match by name to get the correct ID for logo lookups.
+    // We also group by normalized name to de-duplicate channels that appear under
+    // multiple program IDs across different sessions/tuners.
+    let liveTvStats: LiveTvStats | undefined;
+    const livetvActivity = videoActivity.filter(a => a.item_type.toLowerCase() === 'tvchannel');
+    if (livetvActivity.length > 0) {
+        // Fetch the real channel list (name → real channel item ID)
+        const channelIdByName = await emby.getLiveTvChannels(userId);
+
+        const channelMap = new Map<string, { minutes: number; count: number; name: string; realId: string | null }>();
+        for (const activity of livetvActivity) {
+            // Normalize name for deduplication
+            const nameKey = activity.item_name.trim().toLowerCase().replace(/\s+/g, ' ');
+            const existing = channelMap.get(nameKey) || {
+                minutes: 0,
+                count: 0,
+                name: activity.item_name.trim(),
+                realId: channelIdByName.get(nameKey) ?? null
+            };
+            existing.minutes += parseInt(activity.duration || '0', 10) / 60;
+            existing.count += 1;
+            // Fill in the real ID if we didn't have it yet
+            if (!existing.realId) {
+                existing.realId = channelIdByName.get(nameKey) ?? null;
+            }
+            channelMap.set(nameKey, existing);
+        }
+        const liveTvTotalMinutes = Math.round([...channelMap.values()].reduce((s, c) => s + c.minutes, 0));
+        const topChannels: LiveTvChannelStat[] = [...channelMap.values()]
+            .sort((a, b) => b.minutes - a.minutes)
+            .slice(0, 5)
+            .map((stats) => ({
+                id: stats.realId ?? '',
+                name: stats.name,
+                // Only build a logo URL if we have a real channel ID
+                logoUrl: stats.realId ? emby.getLiveTvChannelLogoUrl(stats.realId, 400) : '',
+                minutes: Math.round(stats.minutes),
+                count: stats.count
+            }));
+        liveTvStats = { totalMinutes: liveTvTotalMinutes, topChannels };
+    }
+
     // Process music stats if available
     let musicStats: MusicStats | undefined;
     if (audioActivity.length > 0) {
@@ -1035,6 +1096,7 @@ export async function aggregateUserStats(userId: string, username: string, timeR
         firstWatch,
         lastWatch,
         music: musicStats,
+        liveTv: liveTvStats,
         primaryGenre: topGenres.length > 0 ? topGenres[0].name : null,
         primaryGenrePercentage: topGenres.length > 0 ? topGenres[0].percentage : 0,
         secondaryGenre: topGenres.length > 1 ? topGenres[1].name : null,
