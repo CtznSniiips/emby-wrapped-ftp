@@ -34,7 +34,8 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
             return json({ valid: false, error: 'Invalid username or password' }, { status: 401 });
         }
 
-        setAuthSession(cookies, { userId: user.Id, username: user.Name });
+        const isSecure = new URL(request.url).protocol === 'https:';
+        setAuthSession(cookies, { userId: user.Id, username: user.Name }, isSecure);
 
         return json({ valid: true, userId: user.Id, username: user.Name });
     } catch (error) {
