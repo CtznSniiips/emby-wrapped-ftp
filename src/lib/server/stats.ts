@@ -531,7 +531,7 @@ export async function aggregateUserStats(userId: string, username: string, timeR
     }
 
     // Filter video activity to only include items the filter user has permission to access
-    const accessibleVideoActivity = videoActivity.filter(a => itemDetails.has(String(a.item_id)));
+    const accessibleVideoActivity = videoActivity.filter(a => a._fromTracearr || itemDetails.has(String(a.item_id)));
     const streakTimeZone = getAppTimeZone();
 
     // Build de-duplicated active dates from timestamped playback events.

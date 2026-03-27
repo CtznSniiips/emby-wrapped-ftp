@@ -35,6 +35,7 @@ export interface PlaybackActivity {
     device_name?: string;
     app?: string;
     app_name?: string;
+    _fromTracearr?: boolean;
     [key: string]: string | number | boolean | undefined;
 }
 
@@ -424,6 +425,7 @@ class EmbyClient {
                         device_name: readTracearrString(record, ['device', 'player']),
                         app: readTracearrString(record, ['product']),
                         app_name: readTracearrString(record, ['product']),
+                        _fromTracearr: true
                     };
                 });
         }
