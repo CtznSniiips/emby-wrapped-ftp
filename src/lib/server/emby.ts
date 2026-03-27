@@ -127,6 +127,17 @@ function pseudoItemId(name: string, startedAt: string): number {
     return Math.abs(hash);
 }
 
+
+function formatEpisodeCode(seasonNumber: number, episodeNumber: number): string {
+    if (!Number.isFinite(seasonNumber) || !Number.isFinite(episodeNumber) || seasonNumber <= 0 || episodeNumber <= 0) {
+        return '';
+    }
+
+    const season = Math.trunc(seasonNumber).toString().padStart(2, '0');
+    const episode = Math.trunc(episodeNumber).toString().padStart(2, '0');
+    return `s${season}e${episode}`;
+}
+
 function normalizeTracearrMediaType(value: string): string {
     const mediaType = value.toLowerCase().trim();
     if (mediaType === 'tv') return 'episode';
@@ -460,6 +471,44 @@ class EmbyClient {
                         'item.title',
                         'item.name'
                     ]) || 'Unknown Title';
+                    const seriesTitle = readTracearrString(record, [
+                        'seriesTitle',
+                        'showTitle',
+                        'tvShowTitle',
+                        'seriesName',
+                        'grandparentTitle',
+                        'media.seriesTitle',
+                        'media.seriesName',
+                        'item.seriesName',
+                        'item.seriesTitle',
+                        'item.parentTitle',
+                        'parentTitle',
+                        'parent.title',
+                        'session.seriesTitle'
+                    ]);
+                    const seasonNumber = readTracearrNumber(record, [
+                        'seasonNumber',
+                        'season',
+                        'parentIndexNumber',
+                        'media.seasonNumber',
+                        'item.parentIndexNumber',
+                        'session.seasonNumber'
+                    ]);
+                    const episodeNumber = readTracearrNumber(record, [
+                        'episodeNumber',
+                        'episode',
+                        'indexNumber',
+                        'media.episodeNumber',
+                        'item.indexNumber',
+                        'session.episodeNumber'
+                    ]);
+                    const episodeCode = formatEpisodeCode(seasonNumber, episodeNumber);
+                    const normalizedSeriesTitle = seriesTitle.trim();
+                    const normalizedMediaTitle = mediaTitle.trim();
+                    const composedEpisodeTitle = [episodeCode, normalizedMediaTitle].filter(Boolean).join(' - ');
+                    const displayTitle = mediaType === 'episode' && normalizedSeriesTitle
+                        ? [normalizedSeriesTitle, composedEpisodeTitle || normalizedMediaTitle].filter(Boolean).join(' - ')
+                        : normalizedMediaTitle || 'Unknown Title';
                     const idValue = readTracearrString(record, [
                         'mediaId',
                         'session.mediaId',
@@ -483,7 +532,7 @@ class EmbyClient {
                         date: datePart,
                         time: timePart.replace('Z', ''),
                         user_id: userId,
-                        item_name: mediaTitle,
+                        item_name: displayTitle,
                         item_id: itemId,
                         item_type: mediaType,
                         duration: String(Math.max(0, Math.round(durationSeconds))),
