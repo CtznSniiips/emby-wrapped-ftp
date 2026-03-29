@@ -93,6 +93,41 @@ function normalizeTracearrMediaType(value: string): string {
     return 'unknown';
 }
 
+function isTracearrMisclassifiedLiveTv(record: TracearrRecord, mediaType: string): boolean {
+    if (mediaType !== 'audio') return false;
+
+    const hasVideoCodec = readTracearrString(record, [
+        'sourceVideoCodec',
+        'videoCodec',
+        'streamVideoCodec',
+        'session.sourceVideoCodec',
+        'session.videoCodec'
+    ]).length > 0;
+    if (hasVideoCodec) return true;
+
+    const hasArtist = readTracearrString(record, [
+        'artistName',
+        'artist',
+        'albumArtist',
+        'media.artistName',
+        'item.artist'
+    ]).length > 0;
+    const hasAlbum = readTracearrString(record, [
+        'albumName',
+        'album',
+        'media.albumName',
+        'item.album'
+    ]).length > 0;
+    const hasTrackNumber = readTracearrString(record, [
+        'trackNumber',
+        'track',
+        'media.trackNumber',
+        'item.trackNumber'
+    ]).length > 0;
+
+    return !hasArtist && !hasAlbum && !hasTrackNumber;
+}
+
 function readPositiveNumber(value: unknown): number | null {
     const parsed = Number(value);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
@@ -303,14 +338,9 @@ export async function getTracearrUserPlaybackActivity({
                 'item_type',
                 'type'
             ]);
-            const mediaType = normalizeTracearrMediaType(mediaTypeRaw);
-            if (mediaType === 'audio') {
-                console.log('AUDIO record:', JSON.stringify({
-                    mediaTypeRaw,
-                    mediaTitle: readTracearrString(record, ['mediaTitle', 'title']),
-                    rawType: (record as Record<string, unknown>)['type'],
-                    rawMediaType: (record as Record<string, unknown>)['mediaType']
-                }));
+            let mediaType = normalizeTracearrMediaType(mediaTypeRaw);
+            if (isTracearrMisclassifiedLiveTv(record, mediaType)) {
+                mediaType = 'tvchannel';
             }
             if (mediaType === 'unknown' && mediaTypeRaw) {
                 console.warn('Unrecognized Tracearr mediaType:', mediaTypeRaw);
