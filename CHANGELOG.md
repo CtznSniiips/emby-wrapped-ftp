@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.0] - 2026-03-31
+- **Optional Tracearr integration**: Optionally use Tracearr history instead of Playback Reporting
+
 ## [2.2.0] - 2026-03-24
 - **Live TV stats**: Added new card for LiveTV showing total watch time (for user) and the top 5 channels played by watch time
 
