@@ -3,7 +3,7 @@ services:
     image: ghcr.io/ctznsniiips/emby-wrapped-ftp:latest
     container_name: emby-wrapped
     ports:
-      - "8056:3000"
+      - "8056:3003"
     environment:
       - NODE_ENV=production
       - EMBY_URL=${EMBY_URL}
@@ -34,7 +34,7 @@ services:
     tmpfs:
       - /tmp:noexec,nosuid,nodev
     healthcheck:
-      test: ["CMD", "wget", "-q", "--tries=1", "-O", "/dev/null", "http://127.0.0.1:3000/login"]
+      test: ["CMD", "wget", "-q", "--tries=1", "-O", "/dev/null", "http://127.0.0.1:3003/login"]
       interval: 30s
       timeout: 10s
       retries: 3

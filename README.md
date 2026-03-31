@@ -82,7 +82,7 @@ services:
     image: ghcr.io/ctznsniiips/emby-wrapped:latest
     container_name: emby-wrapped
     ports:
-      - "3000:3000"
+      - "3003:3003"
     environment:
       - EMBY_URL=http://your-emby-server:8096
       - EMBY_API_KEY=your-api-key-here
@@ -95,6 +95,7 @@ services:
       - PUBLIC_URL=      # Optional: for share links
       - CACHE_TTL=86400  # Optional
       - FILTER_USER_ID=  # Optional: filter by user's library
+      - PORT=3003       # Optional: app listen port inside container
     volumes:
       - ./music:/app/static/music:ro  # Optional: custom background music
     restart: unless-stopped
@@ -105,7 +106,7 @@ services:
 docker compose up -d
 ```
 
-4. Access at `http://localhost:3000`
+4. Access at `http://localhost:3003`
 
 ### Updating
 
@@ -175,6 +176,7 @@ npm run preview
 | `ANALYTICS_SCRIPT` | Analytics script tag (e.g., Umami, Plausible) to inject into page head | No |
 | `FILTER_USER_ID` | Emby User ID to use for library filtering (useful for hiding NSFW content) | No |
 | `CACHE_TTL` | Cache duration in seconds for statistics (default: 86400) | No |
+| `PORT` | Server port used by the app/container (default: `3003`). | No |
 
 ## Background Music
 
@@ -201,7 +203,7 @@ Provide time-specific URLs for your users
 Add `?YYYY` or `?MM-YYYY` to your url to pre-select the time period where `MM` is the 2 digit month and `YYYY` is the 4 digit year
 
 #### Example
-> `http://yourip:3000?2025` - will pre-select the year 2025 review after the user logs in
+> `http://yourip:3003?2025` - will pre-select the year 2025 review after the user logs in
 
 ## Tech Stack
 
