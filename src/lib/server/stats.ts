@@ -640,7 +640,12 @@ export async function aggregateUserStats(userId: string, username: string, timeR
             };
             existing.minutes += minutes;
             existing.count += 1;
-            existing.episodes.add(itemId);
+            // For Tracearr records, itemId is a pseudo hash (unstable across plays).
+            // Use item_name as a stable deduplication key instead.
+            const episodeKey = activity._fromTracearr
+                ? activity.item_name.toLowerCase().trim()
+                : itemId;
+            existing.episodes.add(episodeKey);
             // Update seriesId if we find it
             if (item?.SeriesId && !existing.seriesId) {
                 existing.seriesId = item.SeriesId;
