@@ -23,10 +23,13 @@ This version (`emby-wrapped`) adds several features and improvements over the or
 
 ## Screenshots
 
-<p align="center">
-  <img src="https://images.disinfo.zone/uploads/cUxT3h3VqZUrNWHnFaJl2S7MVNkFDZA11ZndwHET.jpg" width="250" alt="Top Shows" />
-  <img src="https://images.disinfo.zone/uploads/SNPzSbEtNqFrd4CmQSBvbtUhe9QFP4Hjuz8kYD8s.jpg" width="250" alt="Viewing Stats" />
-  <img src="https://images.disinfo.zone/uploads/FI4PJKqYrcASPtrKS64KO4QC87jcu47KjT4BkFK6.jpg" width="250" alt="Genre Breakdown" />
+<p>
+  <img src="src/lib/assets/screenshots/login.png" height="300" />
+  <img src="src/lib/assets/screenshots/community-top-shows.png" height="300" />
+  <img src="src/lib/assets/screenshots/user-genre.png" height="300" />
+  <img src="src/lib/assets/screenshots/user-watch-time.png" height="300" />
+  <img src="src/lib/assets/screenshots/user-week-review.png" height="300" />
+  <img src="src/lib/assets/screenshots/user-live-tv.png" height="300" />
 </p>
 
 ## Features
