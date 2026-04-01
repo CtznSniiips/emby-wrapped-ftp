@@ -240,7 +240,7 @@ Add `?YYYY` or `?MM-YYYY` to your url to pre-select the time period where `MM` i
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Feel free to submit a Pull Request. Please base any PRs on the beta branch.
 
 ## License
 
