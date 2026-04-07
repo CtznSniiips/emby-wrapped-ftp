@@ -10,7 +10,6 @@
 	let currentCard = 0;
 	let isTransitioning = false;
 	let containerEl: HTMLDivElement;
-	let cardsAreaEl: HTMLDivElement;
 
 	// Touch handling
 	let touchStartY = 0;
@@ -81,9 +80,9 @@
 
 	function handleClick(event: MouseEvent) {
 		// Ignore clicks on buttons or interactive elements
-		if ((event.target as HTMLElement).closest("button, a, input, select")) return;
+		if ((event.target as HTMLElement).closest("button, a, input")) return;
 
-		const rect = cardsAreaEl.getBoundingClientRect();
+		const rect = containerEl.getBoundingClientRect();
 		const clickX = event.clientX - rect.left;
 		const width = rect.width;
 
@@ -103,19 +102,6 @@
 	});
 </script>
 
-<!--
-	Layout (flex column):
-	┌─────────────────────────┐
-	│  top-bar (progress dots)│  flex-shrink: 0
-	├─────────────────────────┤
-	│                         │
-	│   cards-area  (flex:1)  │  scrollable per-card
-	│                         │
-	├─────────────────────────┤
-	│  bottom-bar (mob arrows)│  flex-shrink: 0 (hidden on desktop)
-	└─────────────────────────┘
-	Desktop side-nav arrows are absolute inside cards-area.
--->
 <div
 	class="card-stack"
 	bind:this={containerEl}
@@ -123,31 +109,12 @@
 	role="region"
 	aria-label="Wrapped story cards"
 	on:keydown={handleKeydown}
+	on:touchstart={handleTouchStart}
+	on:touchend={handleTouchEnd}
+	on:click={handleClick}
 >
-	<!-- ① Progress dots — always visible at top, never overlaps cards -->
-	<div class="top-bar">
-		<slot
-			name="progress"
-			{goToCard}
-			current={currentCard}
-			total={totalCards}
-		>
-			<ProgressDots
-				total={totalCards}
-				current={currentCard}
-				onSelect={(index) => goToCard(index)}
-			/>
-		</slot>
-	</div>
-
-	<!-- ② Cards area — fills remaining space, handles swipe & click -->
-	<div
-		class="cards-area"
-		bind:this={cardsAreaEl}
-		on:touchstart={handleTouchStart}
-		on:touchend={handleTouchEnd}
-		on:click={handleClick}
-	>
+	<!-- Cards -->
+	<div class="cards-container">
 		{#each Array(totalCards) as _, i}
 			<div
 				class="card-wrapper"
@@ -162,56 +129,51 @@
 				/>
 			</div>
 		{/each}
-
-		<!-- Desktop-only side nav arrows, positioned inside cards-area -->
-		{#if currentCard > 0}
-			<button
-				class="side-nav-btn side-prev"
-				on:click|stopPropagation={prevCard}
-				aria-label="Previous card"
-			>
-				<span aria-hidden="true">←</span>
-			</button>
-		{/if}
-		{#if currentCard < totalCards - 1}
-			<button
-				class="side-nav-btn side-next"
-				on:click|stopPropagation={nextCard}
-				aria-label="Next card"
-			>
-				<span aria-hidden="true">→</span>
-			</button>
-		{/if}
 	</div>
 
-	<!-- ③ Bottom bar — mobile arrow nav, real layout space so it never overlaps -->
-	<div class="bottom-bar">
-		{#if currentCard > 0}
-			<button
-				class="mob-nav-btn"
-				on:click|stopPropagation={prevCard}
-				aria-label="Previous card"
+	<!-- Navigation overlay -->
+	<div class="nav-overlay">
+		<!-- Progress dots -->
+		<div class="progress-container">
+			<slot
+				name="progress"
+				{goToCard}
+				current={currentCard}
+				total={totalCards}
 			>
-				<span aria-hidden="true">←</span>
-			</button>
-		{/if}
-		{#if currentCard < totalCards - 1}
-			<button
-				class="mob-nav-btn"
-				on:click|stopPropagation={nextCard}
-				aria-label="Next card"
-			>
-				<span aria-hidden="true">→</span>
-			</button>
-		{/if}
+				<ProgressDots
+					total={totalCards}
+					current={currentCard}
+					onSelect={(index) => goToCard(index)}
+				/>
+			</slot>
+		</div>
+
+		<!-- Navigation hints -->
+		<div class="nav-hints">
+			{#if currentCard > 0}
+				<button
+					class="nav-btn prev"
+					on:click|stopPropagation={prevCard}
+				>
+					<span aria-hidden="true">←</span>
+				</button>
+			{/if}
+			{#if currentCard < totalCards - 1}
+				<button
+					class="nav-btn next"
+					on:click|stopPropagation={nextCard}
+				>
+					<span aria-hidden="true">→</span>
+				</button>
+			{/if}
+		</div>
 	</div>
 </div>
 
 <style>
-	/* ─── Outer shell ─────────────────────────────────────────────────── */
 	.card-stack {
-		display: flex;
-		flex-direction: column;
+		position: relative;
 		width: 100%;
 		height: 100vh;
 		height: 100dvh;
@@ -220,46 +182,23 @@
 		background: #0a0a0a;
 	}
 
-	/* ─── Top bar (progress dots) ─────────────────────────────────────── */
-	.top-bar {
-		flex-shrink: 0;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		padding: 0.75rem 1rem 0.5rem;
-		z-index: 100;
-		/* Dots are buttons with their own pointer events; parent can be none */
-		pointer-events: none;
-	}
-
-	/* Re-enable pointer events for interactive children */
-	.top-bar :global(button),
-	.top-bar :global(a) {
-		pointer-events: auto;
-	}
-
-	/* ─── Cards area ──────────────────────────────────────────────────── */
-	.cards-area {
-		/* Fill all remaining vertical space between top-bar and bottom-bar */
-		flex: 1;
-		min-height: 0; /* critical: lets flex child shrink below content height */
+	.cards-container {
 		position: relative;
-		overflow: hidden;
+		width: 100%;
+		height: 100%;
+		perspective: 1200px;
 	}
 
-	/* ─── Individual card wrappers ────────────────────────────────────── */
 	.card-wrapper {
 		position: absolute;
 		inset: 0;
-		/* Allow card content to scroll vertically when taller than viewport */
 		overflow-y: auto;
 		overflow-x: hidden;
 		overscroll-behavior-y: contain;
 		-webkit-overflow-scrolling: touch;
 		scrollbar-gutter: stable;
-
-		/* Default (hidden) state */
 		opacity: 0;
+		/* Default state (hidden) */
 		transform: scale(0.9) translateY(20px);
 		filter: blur(10px);
 		pointer-events: none;
@@ -292,105 +231,112 @@
 	}
 
 	.card-wrapper.next {
+		/* Adjusted for coming from below */
 		opacity: 0;
 		transform: scale(0.95) translateY(50px);
 		filter: blur(10px);
 		z-index: 5;
 	}
 
-	/* ─── Desktop side-nav arrows (inside cards-area) ─────────────────── */
-	.side-nav-btn {
-		display: none; /* hidden on mobile */
+	.nav-overlay {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		z-index: 100;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		padding: 1.5rem;
 	}
 
-	@media (min-width: 768px) {
-		.side-nav-btn {
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			position: absolute;
-			top: 50%;
-			transform: translateY(-50%);
-			z-index: 200;
-			width: 40px;
-			height: 40px;
-			background: rgba(20, 20, 20, 0.9);
-			backdrop-filter: blur(10px);
-			border: 1px solid rgba(255, 255, 255, 0.1);
-			border-radius: 50%;
-			color: rgba(255, 255, 255, 0.7);
-			font-family: "JetBrains Mono", monospace;
-			font-size: 1.25rem;
-			cursor: pointer;
-			pointer-events: auto;
-			transition: all 0.2s ease;
-		}
-
-		.side-nav-btn span {
-			display: block;
-			line-height: 1;
-		}
-
-		.side-prev {
-			left: 2rem;
-		}
-
-		.side-next {
-			right: 2rem;
-		}
-
-		.side-nav-btn:hover {
-			background: rgba(29, 185, 84, 0.2);
-			border-color: rgba(29, 185, 84, 0.3);
-			color: #1db954;
-		}
-	}
-
-	/* ─── Bottom bar (mobile arrows) ──────────────────────────────────── */
-	.bottom-bar {
-		flex-shrink: 0;
+	.progress-container {
 		display: flex;
 		justify-content: center;
-		align-items: center;
+		pointer-events: none;
+	}
+
+	.nav-hints {
+		display: flex;
+		justify-content: center;
 		gap: 0.5rem;
-		padding: 0.5rem 1rem 0.75rem;
-		min-height: 3rem; /* reserve space even when empty so layout is stable */
+		margin-bottom: 1rem;
 	}
 
-	/* Hide bottom bar entirely on desktop (side-nav-btn takes over) */
-	@media (min-width: 768px) {
-		.bottom-bar {
-			display: none;
-		}
-	}
-
-	.mob-nav-btn {
+	.nav-btn {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 36px;
-		height: 36px;
+		width: 40px;
+		height: 40px;
 		background: rgba(20, 20, 20, 0.9);
 		backdrop-filter: blur(10px);
 		border: 1px solid rgba(255, 255, 255, 0.1);
 		border-radius: 50%;
 		color: rgba(255, 255, 255, 0.7);
 		font-family: "JetBrains Mono", monospace;
-		font-size: 1.1rem;
+		font-size: 1.25rem;
 		cursor: pointer;
-		opacity: 0.7;
+		pointer-events: auto;
 		transition: all 0.2s ease;
 	}
 
-	.mob-nav-btn span {
+	.nav-btn.prev span {
 		display: block;
 		line-height: 1;
 	}
 
-	.mob-nav-btn:active {
-		opacity: 1;
+	.nav-btn.next span {
+		display: block;
+		line-height: 1;
+	}
+
+	.nav-btn:hover {
 		background: rgba(29, 185, 84, 0.2);
 		border-color: rgba(29, 185, 84, 0.3);
 		color: #1db954;
+	}
+
+	/* Mobile: position at bottom inline with audio controls */
+	@media (max-width: 767px) {
+		.nav-hints {
+			position: fixed;
+			bottom: 1.5rem;
+			left: 50%;
+			transform: translateX(-50%);
+			z-index: 1000;
+			margin: 0;
+		}
+
+		.nav-btn {
+			width: 36px;
+			height: 36px;
+			opacity: 0.6;
+		}
+
+		.nav-btn:active {
+			opacity: 1;
+		}
+	}
+
+	/* Desktop: show side navigation areas */
+	@media (min-width: 768px) {
+		.nav-btn {
+			position: absolute;
+			top: 50%;
+			transform: translateY(-50%);
+		}
+
+		.nav-btn.prev {
+			left: 2rem;
+		}
+
+		.nav-btn.next {
+			right: 2rem;
+		}
+
+		.nav-hints {
+			position: static;
+			margin: 0;
+		}
 	}
 </style>
