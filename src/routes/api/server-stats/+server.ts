@@ -63,10 +63,8 @@ async function fetchSeerrRequestStats(timeRange: ReturnType<typeof parseTimeRang
     try {
         const normalizedUrl = seerrUrl.replace(/\/$/, '');
         const allRequests: SeerrRequest[] = [];
-        let page = 1;
-        let totalPages = 1;
 
-        while (page <= totalPages) {
+        const fetchSeerrPage = async (page: number): Promise<SeerrRequestsResponse> => {
             const skip = (page - 1) * 100;
             const response = await fetch(`${normalizedUrl}/api/v1/request?skip=${skip}&take=100`, {
                 headers: {
@@ -74,17 +72,26 @@ async function fetchSeerrRequestStats(timeRange: ReturnType<typeof parseTimeRang
                     'Content-Type': 'application/json'
                 }
             });
-
             if (!response.ok) {
-                console.warn(`Failed to fetch Seerr requests: ${response.status}`);
-                return null;
+                throw new Error(`Failed to fetch Seerr requests: ${response.status}`);
             }
+            return response.json();
+        };
 
-            const data: SeerrRequestsResponse = await response.json();
-            const pageResults = data.results || [];
-            allRequests.push(...pageResults);
-            totalPages = Math.max(data.pageInfo?.pages || 1, 1);
-            page++;
+        // Fetch page 1 first to learn the real total page count, then fetch
+        // the rest concurrently instead of one page at a time.
+        const firstPage = await fetchSeerrPage(1);
+        allRequests.push(...(firstPage.results || []));
+        const totalPages = Math.max(firstPage.pageInfo?.pages || 1, 1);
+
+        if (totalPages > 1) {
+            const remainingPages = Array.from({ length: totalPages - 1 }, (_, i) => i + 2);
+            const PARALLEL_BATCH = 8;
+            for (let i = 0; i < remainingPages.length; i += PARALLEL_BATCH) {
+                const batch = remainingPages.slice(i, i + PARALLEL_BATCH);
+                const results = await Promise.all(batch.map(fetchSeerrPage));
+                for (const data of results) allRequests.push(...(data.results || []));
+            }
         }
 
         const requestsInTimeRange = allRequests.filter((request) =>
@@ -134,9 +141,11 @@ async function fetchSeerrRequestStats(timeRange: ReturnType<typeof parseTimeRang
     }
 }
 
-// Cache for server stats (expires after 5 minutes)
+// Cache for server stats. Completed periods (past years) can't change, so
+// they're cached indefinitely once computed. Only the current, in-progress
+// year gets a short TTL since new plays keep coming in for it.
 const cachedStatsMap = new Map<string, { stats: ServerStats; time: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CURRENT_PERIOD_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 export const GET: RequestHandler = async ({ url, cookies }) => {  // add cookies
     const session = getAuthSession(cookies);
@@ -148,9 +157,19 @@ export const GET: RequestHandler = async ({ url, cookies }) => {  // add cookies
         const timeRangeStr = timeRangeToString(timeRange);
         const cacheKey = timeRangeStr;
 
-        // Return cached data if still valid
+        // A period is still "in progress" (and needs periodic re-fetching)
+        // if it's the current year, or the current month within the current
+        // year. Anything earlier is a completed period whose stats can
+        // never change once computed, so it's safe to cache indefinitely.
+        const now = new Date();
+        const isCurrentPeriod =
+            timeRange.year === now.getFullYear() &&
+            (timeRange.type === 'year' || timeRange.month === now.getMonth() + 1);
+
+        // Return cached data if still valid. Completed periods never expire;
+        // the current period expires after CURRENT_PERIOD_CACHE_TTL.
         const cached = cachedStatsMap.get(cacheKey);
-        if (cached && Date.now() - cached.time < CACHE_TTL) {
+        if (cached && (!isCurrentPeriod || Date.now() - cached.time < CURRENT_PERIOD_CACHE_TTL)) {
             console.log(`Returning cached server stats for ${cacheKey}`);
             return json(cached.stats);
         }
@@ -231,11 +250,20 @@ export const GET: RequestHandler = async ({ url, cookies }) => {  // add cookies
 
         if (itemIdList.length > 0 && fetchUserId) {
             try {
-                // Batch fetch items
+                // Batch fetch items in parallel (chunks of 50 IDs per request)
+                const batches: string[][] = [];
                 for (let i = 0; i < itemIdList.length; i += 50) {
-                    const batch = itemIdList.slice(i, i + 50);
-                    const items = await emby.getItems(fetchUserId, batch);
-                    items.forEach(item => itemDetails.set(item.Id, item));
+                    batches.push(itemIdList.slice(i, i + 50));
+                }
+                const batchResults = await Promise.allSettled(
+                    batches.map((batch) => emby.getItems(fetchUserId, batch))
+                );
+                for (const result of batchResults) {
+                    if (result.status === 'fulfilled') {
+                        result.value.forEach(item => itemDetails.set(item.Id, item));
+                    } else {
+                        console.warn('Failed to fetch an item detail batch for server stats:', result.reason);
+                    }
                 }
             } catch (e) {
                 console.warn('Failed to fetch item details for server stats:', e);
