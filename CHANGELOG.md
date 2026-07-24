@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 - A few methods to speed up data loading
   - Implemented a 7-day TMDB poster cache
   - Implemented sequential Tracearr data lookups
-  - Permanently cached data for completed years
+  - Cached data for completed years and completed months
 
 ## [2.5.0] - 2026-05-04
 
